@@ -16,7 +16,7 @@ config.read("config.cfg")
 farm_server_ip = "10.70.66.2"
 farm_media_paths = ["/media/fo18103/Storage/CCTV/hanwha/", "/media/fo18103/Storage/CCTV/hikvision/media/"]
 
-receiving_server_path = "/mnt/storage/scratch/cctv/"
+receiving_server_path = "/mnt/storage/cctv/"
 farm_server_user = config["SSH"]["farm_server_user"]
 farm_server_password = config["SSH"]["farm_server_password"]
 
@@ -129,3 +129,5 @@ def clean():
 if __name__ == "__main__":
     main()
 
+
+#nohup sshpass -p 'Mojjo@2015' rsync -avz --ignore-existing fo18103@IT107029.users.bris.ac.uk:/mnt/storage/cctv/ /mnt/storage/cctv/ > rsync.log 2>&1 &
