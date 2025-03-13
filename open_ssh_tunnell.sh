@@ -21,7 +21,7 @@ open_ssh_tunnel() {
     # SSH command to establish the tunnel
     SSH_COMMAND="ssh -i $SSH_KEY_PATH -L ${local_port}:${camera_ip}:554 -N ${SSH_USER}@${SSH_SERVER}"
 
-    echo "Opening SSH tunnel for camera ${camera_ip} on local port ${local_port}..."
+    echo "Opening SSH ${SSH_COMMAND} tunnel for camera ${camera_ip} on local port ${local_port}..."
 
     # Open a new GNOME terminal and run the SSH command
     gnome-terminal -- bash -c "${SSH_COMMAND}; exec bash"
