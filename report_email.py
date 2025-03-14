@@ -92,5 +92,5 @@ def main():
         time.sleep(60)  # Check every minute
 
 if __name__ == "__main__":
-    #main()
-    report_status()
+    main()
+    #report_status()
