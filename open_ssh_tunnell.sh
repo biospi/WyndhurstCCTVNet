@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Kill all terminal instances
+pkill -f "gnome-terminal"
+
 # Path to your SSH private key
 SSH_KEY_PATH="$HOME/.ssh/id_rsa_hanwha"
 
@@ -7,11 +10,8 @@ SSH_KEY_PATH="$HOME/.ssh/id_rsa_hanwha"
 SSH_USER="fo18103"
 SSH_SERVER="10.70.66.2"
 
-
-mapfile -t CAMERA_IPS < hanwha.txt
-
-# Starting local port number
-START_PORT=5554
+# Read the IP and port from file.txt
+mapfile -t CAMERA_DETAILS < hanwha.txt
 
 # Function to open a new terminal with an SSH tunnel
 open_ssh_tunnel() {
@@ -27,10 +27,11 @@ open_ssh_tunnel() {
     gnome-terminal -- bash -c "${SSH_COMMAND}; exec bash"
 }
 
-# Loop through all cameras and open SSH tunnels
-for i in "${!CAMERA_IPS[@]}"; do
-    camera_ip=${CAMERA_IPS[$i]}
-    local_port=$((START_PORT + i))
+# Loop through all camera details and open SSH tunnels
+for camera_detail in "${CAMERA_DETAILS[@]}"; do
+    camera_ip=$(echo $camera_detail | cut -d ' ' -f 1)  # Get the IP (first value)
+    local_port=$(echo $camera_detail | cut -d ' ' -f 3)  # Get the port (third value)
+
     open_ssh_tunnel "$camera_ip" "$local_port"
     sleep 0.5  # Small delay to avoid overwhelming the system
 done
