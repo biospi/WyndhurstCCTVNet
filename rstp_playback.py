@@ -34,7 +34,7 @@ def create_output_directory(output_file: str, ip_tag: str):
     tag = ip_tag.split('.')[-1]
     output_dir = Path(f'/mnt/storage/cctv/66.{tag}/{date_subfolder}/videos/')
     output_dir.mkdir(parents=True, exist_ok=True)
-    print(output_dir)
+    #print(output_dir)
     return output_dir
 
 def generate_perfect_5min_ranges(start: str, end: str) -> list:
@@ -142,10 +142,10 @@ def get_clips_range(out_dir):
 
 
 def main(ip, is_fisheye, port=0):
-    ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel_single.sh {ip} {port}"
-    print("Starting SSH tunnels...")
-    print(ssh_tunnel_script)
-    subprocess.run(ssh_tunnel_script, shell=True, check=True)
+    # ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel_single.sh {ip} {port}"
+    # print("Starting SSH tunnels...")
+    # print(ssh_tunnel_script)
+    # subprocess.run(ssh_tunnel_script, shell=True, check=True)
 
     now = datetime.now()
     earliest_recording = (now - timedelta(days=2, hours=0, minutes=0)).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -212,15 +212,15 @@ def main(ip, is_fisheye, port=0):
             #     print(f"Failed to download {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
 
 if __name__ == "__main__":
-    main("10.70.66.47", 1, port=5582)
+    #main("10.70.66.47", 1, port=5582)
     # main("10.70.66.40", 1, port=5575)
     #main("10.70.66.22", 0, 5560)
     #main("10.70.66.25", 0, port=5563)
-    # if len(sys.argv) > 1:
-    #     ip = sys.argv[1]
-    #     is_fisheye = sys.argv[2]
-    #     port = int(sys.argv[3])
-    #     print("argument:", ip)
-    #     main(ip, is_fisheye, port)
-    # else:
-    #     print("No argument provided")
+    if len(sys.argv) > 1:
+        ip = sys.argv[1]
+        is_fisheye = sys.argv[2]
+        port = int(sys.argv[3])
+        print("argument:", ip)
+        main(ip, is_fisheye, port)
+    else:
+        print("No argument provided")
