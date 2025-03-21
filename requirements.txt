@@ -3,3 +3,6 @@ numpy
 paramiko
 schedule
 yagmail
+seaborn
+scipy
+matplotlib

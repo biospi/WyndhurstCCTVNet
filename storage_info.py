@@ -4,29 +4,71 @@ import configparser
 import pandas as pd
 from datetime import datetime
 import seaborn as sns
+import subprocess
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")  # Use a non-interactive backend
 import matplotlib.pyplot as plt
 
 from utils import is_float
 
 HIKVISION = [1, 3, 4, 5, 6, 8, 9, 11, 33, 34, 125, 126, 128, 130, 131, 132, 133, 136, 137, 138, 139, 156]
 
-HANWHA = [int(line.strip().split('.')[-1]) for line in open("hanwha.txt")]
+with open("hanwha.txt") as f:
+    HANWHA = [int(line.split()[0].rsplit('.', 1)[-1]) for line in f]
 
+
+def get_video_duration(file_path):
+    """Get the duration of a video file in seconds using ffprobe."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-i", file_path, "-show_entries",
+                "format=duration", "-v", "quiet", "-of", "csv=p=0"
+            ],
+            capture_output=True, text=True
+        )
+        duration = float(result.stdout.strip())
+        return int(duration)
+    except Exception as e:
+        print(f"Failed to get duration: {e}")
+        return 0
+
+
+def parse_datetime(date_str):
+    for fmt in ("%Y%m%dT%H%M%S", "%Y%m%d%H%M%S"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    raise ValueError(f"Time data '{date_str}' does not match expected formats.")
+
+
+def get_ffmpeg_durations(videos):
+    durations = []
+    for vid in videos:
+        duration = get_video_duration(vid)
+        durations.append(duration)
+    return durations
 
 
 def main():
-    mp4_files = list(Path("/mnt/storage/scratch/cctv/").rglob("*.mp4"))
+    mp4_files = list(Path("/mnt/storage/cctv/").rglob("*.mp4"))
     print(f"Found {len(mp4_files)} files.")
     df = pd.DataFrame(mp4_files, columns=['FilePath'])
     df['FileSizeBytes'] = df['FilePath'].apply(lambda x: x.stat().st_size)
     df['FileSizeGB'] = df['FileSizeBytes'] / (1024 ** 3)
 
     df["dates"] = [x.stem for x in mp4_files]
-    dt_format = "%Y%m%dT%H%M%S"
-    df["s_dates"] = [datetime.strptime(x.stem.split('_')[0], dt_format) for x in mp4_files]
-    df["f_dates"] = [datetime.strptime(x.stem.split('_')[1], dt_format) for x in mp4_files]
+    df["s_dates"] = [parse_datetime(x.stem.split('_')[0]) for x in mp4_files]
+    df["f_dates"] = [parse_datetime(x.stem.split('_')[1]) for x in mp4_files]
+
+    df["duration"] = (df["f_dates"] - df["s_dates"]).dt.total_seconds()
+    #df["duration_ffmpeg"] = get_ffmpeg_durations(df["FilePath"])
+    df.to_csv("metadata.csv", index=False)
     df["ip"] = [x.parent.parent.parent.name if 'videos' in str(x) else x.parent.parent.name for x in mp4_files]
     df = df.sort_values(by=["s_dates", "f_dates"])
+    #df.to_csv("metadata.csv", index=False)
     dfs = [group for _, group in df.groupby('ip')]
     data = []
     for df in dfs:
@@ -50,7 +92,7 @@ def main():
 
     heatmap_data = df_data.pivot_table(index='ip', columns='date', values='storage')
 
-    heatmap_data.loc["total"] = heatmap_data.sum()
+    #heatmap_data.loc["total"] = heatmap_data.sum()
     plt.figure(figsize=(20, 8*2))
     a = HIKVISION + HANWHA
     ip_order = [f"66.{x}" for x in a]
@@ -62,7 +104,7 @@ def main():
     plt.title(f'Storage Usage Heatmap HIKVISION ({len(HIKVISION)}) HANWHA ({len(HANWHA)})')
     plt.xlabel('Date')
 
-    ax.get_yticklabels()[-1].set_label("Total")
+    #ax.get_yticklabels()[-1].set_label("Total")
     for label in ax.get_yticklabels()[:-1]:
         ip_id = int(label.get_text().split('.')[1])
         if ip_id in HIKVISION:
@@ -73,7 +115,39 @@ def main():
     plt.ylabel('IP')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig("storage.png")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"storage_{timestamp}.png"
+
+    out_dir = Path("storage")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    filepath = out_dir / filename
+    print(f"Writing {filepath}")
+    plt.savefig(filepath)
+
+    filename = f"data_storage_{timestamp}.csv"
+    filepath = out_dir / filename
+    df_data.to_csv(filepath, index=False)
+
+    # Compute total storage per date
+    total_storage = heatmap_data.sum()
+
+    # Create a new DataFrame for the single-row heatmap
+    total_df = pd.DataFrame([total_storage], index=["Total"])
+
+    # Plot the single-row heatmap
+    plt.figure(figsize=(20, 3))
+    ax = sns.heatmap(total_df, annot=True, fmt=".0f", cbar_kws={'label': 'Total Storage (GB)'})
+    ax.set_xticklabels(total_df.columns.strftime('%d-%m-%Y'))
+    plt.title("Total Storage Usage Heatmap")
+    plt.xlabel("Date")
+    plt.ylabel("")
+    plt.tight_layout()
+
+    # Save the heatmap
+    total_filename = f"0_storage_total.png"
+    total_filepath = out_dir / total_filename
+    print(f"Writing {total_filepath}")
+    plt.savefig(total_filepath)
 
 
 
