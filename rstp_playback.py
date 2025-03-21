@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 from storage_info import parse_datetime
-from utils import run_cmd
+from utils import run_cmd, SOURCE_PATH
 
 MAX_ONVIF_RETRY = 5
 MAX_DOWNLOAD_RETRIES = 1
@@ -102,6 +102,7 @@ def process_raw_video(input_file, output_file):
 
 
 def download_video(rtsp_url, output_file):
+    output_file.unlink(missing_ok=True)
     """Download video via ffmpeg."""
     #-analyzeduration 10000000 -probesize 10000000 \
     ffmpeg_command = [
@@ -141,6 +142,11 @@ def get_clips_range(out_dir):
 
 
 def main(ip, is_fisheye, port=0):
+    ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel_single.sh {ip} {port}"
+    print("Starting SSH tunnels...")
+    print(ssh_tunnel_script)
+    subprocess.run(ssh_tunnel_script, shell=True, check=True)
+
     now = datetime.now()
     earliest_recording = (now - timedelta(days=2, hours=0, minutes=0)).strftime('%Y-%m-%dT%H:%M:%SZ')
     latest_recording = now.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -149,7 +155,7 @@ def main(ip, is_fisheye, port=0):
 
     for i in range(len(clips)):
         clock = f"{clips[i][0]}-{clips[i][1]}"
-        rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock}/OverlappedID=0/backup.smp"
+        rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock.replace('T','')}/OverlappedID=0/backup.smp"
         #recording/20250305000000-20250305000500/OverlappedID=0/backup.smp
         filename = f"{clock}.mp4".replace("-", '_')
         out_dir = create_output_directory(filename, ip)
@@ -163,24 +169,22 @@ def main(ip, is_fisheye, port=0):
             # print(f"File {output_file} already exists. Skipping download.")
             continue
 
-        output_file.unlink(missing_ok=True)
-
         for attempt in range(1, MAX_DOWNLOAD_RETRIES + 1):
             print(f"Attempt {attempt} to download {filename}")
-
-            if is_fisheye:
-                filename = f"{clock}.mp4".replace("-", '_')
-                output_file = out_dir / filename
-                p_status = download_video(rtsp_url, output_file)
-                if p_status == 0:
-                    filename_p = f"{clock}.mp4".replace("-", '_')
-                    output_file_p = out_dir / filename_p
-                    # p_status = process_raw_video(output_file, output_file_p)
-                    # if p_status == 0:
-                    #     output_file.unlink(missing_ok=True)
-                    #     output_file = output_file_p
-            else:
-                p_status = download_video(rtsp_url, output_file)
+            p_status = download_video(rtsp_url, output_file)
+            # if is_fisheye:
+            #     filename = f"{clock}.mp4".replace("-", '_')
+            #     output_file = out_dir / filename
+            #     p_status = download_video(rtsp_url, output_file)
+            #     if p_status == 0:
+            #         filename_p = f"{clock}.mp4".replace("-", '_')
+            #         output_file_p = out_dir / filename_p
+            #         # p_status = process_raw_video(output_file, output_file_p)
+            #         # if p_status == 0:
+            #         #     output_file.unlink(missing_ok=True)
+            #         #     output_file = output_file_p
+            # else:
+            #     p_status = download_video(rtsp_url, output_file)
             print(f"Download status: {p_status}")
 
             if output_file.exists():
@@ -208,7 +212,7 @@ def main(ip, is_fisheye, port=0):
             #     print(f"Failed to download {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
 
 if __name__ == "__main__":
-    main("10.70.66.47", 1, port=5556)
+    main("10.70.66.47", 1, port=5582)
     # main("10.70.66.40", 1, port=5575)
     #main("10.70.66.22", 0, 5560)
     #main("10.70.66.25", 0, port=5563)

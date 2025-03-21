@@ -6,6 +6,7 @@ import configparser
 import pandas as pd
 from datetime import datetime
 
+SOURCE_PATH = "/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/"
 
 def is_float(string):
     try:

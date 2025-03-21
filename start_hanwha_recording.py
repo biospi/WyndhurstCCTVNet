@@ -1,9 +1,11 @@
 import subprocess
 import time
 
-def main(source_path):
-    print(source_path)
-    ssh_tunnel_script = f"{source_path}open_ssh_tunnel.sh"
+from utils import SOURCE_PATH
+
+
+def main():
+    ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel.sh"
     print("Starting SSH tunnels...")
     print(ssh_tunnel_script)
     subprocess.run(ssh_tunnel_script, shell=True, check=True)
@@ -17,8 +19,8 @@ def main(source_path):
     # time.sleep(2)
 
     print("Starting hanwha_rtsp_multi.py...")
-    subprocess.run(["python3", f"{source_path}hanwha_rtsp_multi.py"])
+    subprocess.run(["python3", f"{SOURCE_PATH}hanwha_rtsp_multi.py"])
 
 if __name__ == '__main__':
-    main("/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/")
+    main()
 
