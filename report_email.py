@@ -103,6 +103,7 @@ def report_status():
 
 # Schedule the script to run daily at 1 PM
 schedule.every().day.at("08:00").do(report_status)
+schedule.every().day.at("17:00").do(report_status)
 
 def main():
     print("Scheduler started")

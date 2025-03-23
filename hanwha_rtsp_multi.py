@@ -37,8 +37,9 @@ if __name__ == "__main__":
         start_time = time.time()
         main("hanwha.txt")
         duration = time.time() - start_time
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
         csv_file = metadata_dir / f"iteration_{timestamp}.csv"
         df = pd.DataFrame({"Timestamp": [timestamp], "Duration (s)": [duration]})
+        df["Duration (days)"] = df["Duration (s)"] / 86400
         df.to_csv(csv_file, index=False)
         print(f"Iteration completed in {duration:.2f} seconds. Saved to {csv_file}")

@@ -13,8 +13,8 @@ from utils import run_cmd, SOURCE_PATH
 
 MAX_ONVIF_RETRY = 5
 MAX_DOWNLOAD_RETRIES = 1
-# EXPECTED_DURATION_LANDSCAPE = 300
-# EXPECTED_DURATION_FISH = 290
+EXPECTED_DURATION_LANDSCAPE = 300
+EXPECTED_DURATION_FISH = 290
 USERNAME = "admin"
 PASSWORD = "Ocs881212"
 
@@ -105,6 +105,17 @@ def download_video(rtsp_url, output_file):
     output_file.unlink(missing_ok=True)
     """Download video via ffmpeg."""
     #-analyzeduration 10000000 -probesize 10000000 \
+    # ffmpeg_command = [
+    #     "ffmpeg",
+    #     "-hide_banner",
+    #     "-rtsp_transport", "tcp",
+    #     "-rtbufsize", "100M",
+    #     "-i", rtsp_url,
+    #     "-an",
+    #     "-c:v", "copy",
+    #     "-f", "mp4",
+    #     output_file.as_posix()
+    # ]
     ffmpeg_command = [
         "ffmpeg",
         "-hide_banner",
@@ -112,13 +123,21 @@ def download_video(rtsp_url, output_file):
         "-rtbufsize", "100M",
         "-i", rtsp_url,
         "-an",
-        "-c:v", "copy",
+        "-c:v", "libx264",
+        "-crf", "28",
+        "-preset", "veryfast",
         "-f", "mp4",
         output_file.as_posix()
     ]
     ffmpeg_command = " ".join(ffmpeg_command).strip()
     print(f"FFMPEG CMD:{ffmpeg_command}")
-    return run_cmd(ffmpeg_command, verbose=True)
+    start_time = time.time()
+    res = run_cmd(ffmpeg_command, verbose=True)
+    end_time = time.time()
+    duration_seconds = end_time - start_time  # Compute duration
+    duration_minutes = duration_seconds / 60  # Convert to minutes
+    print(f"Download completed in {duration_minutes:.2f} minutes ({duration_seconds:.2f} seconds). {rtsp_url}")
+    return res
 
 
 def check_file_range_exist(file_start, clips_range):
@@ -148,7 +167,7 @@ def main(ip, is_fisheye, port=0):
     # subprocess.run(ssh_tunnel_script, shell=True, check=True)
 
     now = datetime.now()
-    earliest_recording = (now - timedelta(days=2, hours=0, minutes=0)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    earliest_recording = (now - timedelta(days=1, hours=12, minutes=0)).strftime('%Y-%m-%dT%H:%M:%SZ')
     latest_recording = now.strftime('%Y-%m-%dT%H:%M:%SZ')
     clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
     print(f"Found {len(clips)} recordings. First clip: [{clips[0]}] Last clip: [{clips[-1]}]")
@@ -194,28 +213,29 @@ def main(ip, is_fisheye, port=0):
                     break
 
                 print(f"File duration: {duration}")
-            #     if is_fisheye:
-            #         exp_dur = EXPECTED_DURATION_FISH
-            #     else:
-            #         exp_dur = EXPECTED_DURATION_LANDSCAPE
-            #
-            #     if duration >= exp_dur:
-            #         print(f"File {filename} downloaded successfully with correct duration.")
-            #         break
-            #     else:
-            #         print(f"Duration mismatch: Expected {exp_dur}, got {duration}")
-            #         output_file.unlink()  # Remove bad file
-            # else:
-            #     print("File download failed.")
+                if is_fisheye:
+                    exp_dur = EXPECTED_DURATION_FISH
+                else:
+                    exp_dur = EXPECTED_DURATION_LANDSCAPE
 
-            # if attempt == MAX_DOWNLOAD_RETRIES:
-            #     print(f"Failed to download {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
+                if duration >= exp_dur:
+                    print(f"File {filename} downloaded successfully with correct duration.")
+                    break
+                else:
+                    print(f"Duration mismatch: Expected {exp_dur}, got {duration}")
+                    if attempt != MAX_DOWNLOAD_RETRIES:
+                        output_file.unlink()  # Remove bad file
+            else:
+                print("File download failed.")
+
+            if attempt == MAX_DOWNLOAD_RETRIES:
+                print(f"Failed to download {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
 
 if __name__ == "__main__":
     #main("10.70.66.47", 1, port=5582)
     # main("10.70.66.40", 1, port=5575)
-    #main("10.70.66.22", 0, 5560)
-    #main("10.70.66.25", 0, port=5563)
+    # main("10.70.66.22", 0, 5560)
+    # main("10.70.66.25", 0, port=5563)
     if len(sys.argv) > 1:
         ip = sys.argv[1]
         is_fisheye = sys.argv[2]
