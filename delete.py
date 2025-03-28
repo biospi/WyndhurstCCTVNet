@@ -60,7 +60,7 @@ def delete_old_videos(base_path: str):
 
 
 if __name__ == "__main__":
-    base_path = "/mnt/storage/scratch/cctv/"
+    base_path = "/mnt/storage/cctv/"
 
     # Run the cleanup periodically (every 24 hours)
     while True:
@@ -117,6 +117,6 @@ if __name__ == "__main__":
 #
 # if __name__ == "__main__":
 #     # Example usage:
-#     base_path = "/mnt/storage/scratch/cctv/"
+#     base_path = "/mnt/storage/cctv/"
 #     cutoff_date = "23Jan2025"
 #     delete_old_videos(base_path, cutoff_date)

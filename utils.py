@@ -26,9 +26,12 @@ import subprocess as sp
 def run_cmd(cmd, i=0, tot=0, verbose=True):
     if verbose:
         print(cmd)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
     (output, err) = p.communicate()
     p_status = p.wait()
+    print(err)
+    if err is not None and "does not contain any stream" in err:
+        return -1
     return p_status
     # if verbose:
     #     print(f"[{i}/{tot}] status-> {p_status} output-> {output} err-> {err}")

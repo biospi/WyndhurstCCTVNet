@@ -12,9 +12,9 @@ from storage_info import parse_datetime
 from utils import run_cmd, SOURCE_PATH
 
 MAX_ONVIF_RETRY = 5
-MAX_DOWNLOAD_RETRIES = 1
-EXPECTED_DURATION_LANDSCAPE = 300
-EXPECTED_DURATION_FISH = 290
+MAX_DOWNLOAD_RETRIES = 6
+EXPECTED_DURATION_LANDSCAPE = 298
+EXPECTED_DURATION_FISH = 298
 USERNAME = "admin"
 PASSWORD = "Ocs881212"
 
@@ -32,7 +32,7 @@ def create_output_directory(output_file: str, ip_tag: str):
     timestamp = datetime.strptime(timestamp_str, '%Y%m%dT%H%M%S')
     date_subfolder = timestamp.strftime('%Y%b%d')
     tag = ip_tag.split('.')[-1]
-    output_dir = Path(f'/mnt/storage/cctv/66.{tag}/{date_subfolder}/videos/')
+    output_dir = Path(f'/mnt/storage/cctvnet/66.{tag}/{date_subfolder}/videos/')
     output_dir.mkdir(parents=True, exist_ok=True)
     #print(output_dir)
     return output_dir
@@ -49,7 +49,7 @@ def generate_perfect_5min_ranges(start: str, end: str) -> list:
     if aligned_start_dt.minute % 5 != 0:
         aligned_start_dt += timedelta(minutes=(5 - aligned_start_dt.minute % 5))  # Move up to next 5-minute mark
 
-    step = timedelta(minutes=5, seconds=1)
+    step = timedelta(minutes=5, seconds=0)
     ranges = []
     ranges_datetime = []
     current_dt = aligned_start_dt
@@ -101,34 +101,80 @@ def process_raw_video(input_file, output_file):
     return run_cmd(ffmpeg_command, verbose=True)
 
 
-def download_video(rtsp_url, output_file):
+def get_fps(rtsp_url):
+    """Extract FPS from RTSP stream using FFmpeg."""
+    cmd = [
+        "ffmpeg",
+        "-rtsp_transport", "tcp",
+        "-i", rtsp_url,
+        "-hide_banner",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=r_frame_rate",
+        "-of", "csv=p=0"
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    fps = result.stdout.strip()
+    if fps and "/" in fps:  # Convert fractional FPS (e.g., 50/3) to float
+        num, den = map(int, fps.split("/"))
+        return str(num / den)
+    return "16"  # Default fallback if detection fails
+
+
+def download_video(rtsp_url, output_file, raw=False):
     output_file.unlink(missing_ok=True)
     """Download video via ffmpeg."""
     #-analyzeduration 10000000 -probesize 10000000 \
-    # ffmpeg_command = [
-    #     "ffmpeg",
-    #     "-hide_banner",
-    #     "-rtsp_transport", "tcp",
-    #     "-rtbufsize", "100M",
-    #     "-i", rtsp_url,
-    #     "-an",
-    #     "-c:v", "copy",
-    #     "-f", "mp4",
-    #     output_file.as_posix()
-    # ]
-    ffmpeg_command = [
-        "ffmpeg",
-        "-hide_banner",
-        "-rtsp_transport", "tcp",
-        "-rtbufsize", "100M",
-        "-i", rtsp_url,
-        "-an",
-        "-c:v", "libx264",
-        "-crf", "28",
-        "-preset", "veryfast",
-        "-f", "mp4",
-        output_file.as_posix()
-    ]
+    if raw:
+        ffmpeg_command = [
+            "ffmpeg",
+            "-hide_banner",
+            "-rtsp_transport", "tcp",
+            "-buffer_size", "10485760",
+            "-rtbufsize", "100M",
+            "-i", rtsp_url,
+            "-an",
+            "-c:v", "copy",
+            "-f", "mp4",
+            output_file.as_posix()
+        ]
+    else:
+        # ffmpeg_command = [
+        #     "ffmpeg",
+        #     "-hide_banner",
+        #     "-rtsp_transport", "tcp",
+        #     "-buffer_size", "10485760",
+        #     "-rtbufsize", "300M",
+        #     "-i", rtsp_url,
+        #     "-an",
+        #     "-c:v", "libx264",
+        #     "-crf", "28",
+        #     "-preset", "veryfast",
+        #     "-vsync", "0",  # Preserves original timing
+        #     "-f", "mp4",
+        #     output_file.as_posix()
+        # ]
+        ffmpeg_command = [
+            "ffmpeg",
+            "-hide_banner",
+            "-rtsp_transport", "tcp",
+            "-buffer_size", "10485760",
+            "-rtbufsize", "300M",
+            "-fflags", "nobuffer",
+            "-flags", "+low_delay",
+            "-strict", "experimental",
+            "-use_wallclock_as_timestamps", "1",
+            "-fflags", "+genpts",
+            "-stimeout", "5000000",
+            "-i", rtsp_url,
+            "-an",
+            "-c:v", "libx264",
+            "-crf", "28",
+            "-preset", "veryfast",
+            "-vsync", "0",
+            "-f", "mp4",
+            output_file.as_posix()
+        ]
+
     ffmpeg_command = " ".join(ffmpeg_command).strip()
     print(f"FFMPEG CMD:{ffmpeg_command}")
     start_time = time.time()
@@ -139,6 +185,52 @@ def download_video(rtsp_url, output_file):
     print(f"Download completed in {duration_minutes:.2f} minutes ({duration_seconds:.2f} seconds). {rtsp_url}")
     return res
 
+
+# def find_missing_ranges(clips_range):
+#     missing_ranges = []
+#     missing_ranges_str = []
+#     for i in range(len(clips_range) - 1):
+#         end = clips_range[i][1]
+#         next_start = clips_range[i + 1][0]
+#         if next_start > end:
+#             # Calculate the missing range
+#             missing_start = end + timedelta(seconds=1)
+#             missing_end = next_start - timedelta(seconds=1)
+#             missing_ranges.append([missing_start, missing_end])
+#             missing_ranges_str.append([missing_start.strftime("%Y%m%dT%H%M%S"), missing_end.strftime("%Y%m%dT%H%M%S")])
+#     return missing_ranges, missing_ranges_str
+def find_missing_ranges(clips_range, min_gap=timedelta(minutes=5), max_gap=timedelta(minutes=5, seconds=6)):
+    missing_ranges = []
+    missing_ranges_str = []
+
+    for i in range(len(clips_range) - 1):
+        end = clips_range[i][1]
+        next_start = clips_range[i + 1][0]
+
+        # Ensure the missing range is at least `min_gap` long
+        if next_start > end + min_gap:
+            missing_start = end + timedelta(seconds=1)
+            missing_end = next_start - timedelta(seconds=1)
+
+            # If the gap is larger than max_gap, split it into 5-minute chunks
+            while missing_start + max_gap < missing_end:
+                split_end = missing_start + min_gap  # Ensure 5 min chunk
+                missing_ranges.append([missing_start, split_end])
+                missing_ranges_str.append([
+                    missing_start.strftime("%Y%m%dT%H%M%S"),
+                    split_end.strftime("%Y%m%dT%H%M%S")
+                ])
+                missing_start = split_end + timedelta(seconds=1)
+
+            # Add the last chunk if remaining time is between min_gap and max_gap
+            if missing_start < missing_end:
+                missing_ranges.append([missing_start, missing_end])
+                missing_ranges_str.append([
+                    missing_start.strftime("%Y%m%dT%H%M%S"),
+                    missing_end.strftime("%Y%m%dT%H%M%S")
+                ])
+
+    return missing_ranges, missing_ranges_str
 
 def check_file_range_exist(file_start, clips_range):
     clips_range = sorted(clips_range, key=lambda x: x[0])
@@ -157,8 +249,25 @@ def get_clips_range(out_dir):
         date_end_str = split[1].replace(".mp4", "")
         dt_end = parse_datetime(date_end_str)
         range.append([dt_start, dt_end])
+    range = sorted(range, key=lambda x: x[0])
     return range
 
+def check_gaps(clips_range, port, ip):
+    missing_ranges, missing_clips = find_missing_ranges(clips_range)
+    if len(missing_ranges) > 0:
+        print(f"Found {len(missing_ranges)} recordings missing ranges.")
+    for j in range(len(missing_ranges)):
+        clock = f"{missing_clips[j][0]}-{missing_clips[j][1]}"
+        rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock.replace('T', '')}/OverlappedID=0/backup.smp"
+        filename = f"{clock}.mp4".replace("-", '_')
+        out_dir = create_output_directory(filename, ip)
+        output_file = out_dir / filename
+        for attempt in range(1, MAX_DOWNLOAD_RETRIES + 1):
+            print(f"Attempt {attempt} to download {ip} {filename}")
+            p_status = download_video(rtsp_url, output_file)
+            print(f"Download status: {p_status} | {ip} {filename}")
+            if p_status <= 0:
+                break
 
 def main(ip, is_fisheye, port=0):
     # ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel_single.sh {ip} {port}"
@@ -167,13 +276,20 @@ def main(ip, is_fisheye, port=0):
     # subprocess.run(ssh_tunnel_script, shell=True, check=True)
 
     now = datetime.now()
-    earliest_recording = (now - timedelta(days=1, hours=12, minutes=0)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    earliest_recording = (now - timedelta(days=3, hours=now.hour, minutes=now.minute, seconds=now.second)).strftime('%Y-%m-%dT%H:%M:%SZ')
     latest_recording = now.strftime('%Y-%m-%dT%H:%M:%SZ')
     clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
     print(f"Found {len(clips)} recordings. First clip: [{clips[0]}] Last clip: [{clips[-1]}]")
 
+    # clock = f"{clips[0][0]}-{clips[0][1]}"
+    # filename = f"{clock}.mp4".replace("-", '_')
+    # out_dir = create_output_directory(filename, ip)
+    # clips_range = get_clips_range(out_dir)
+    # check_gaps(clips_range, port, ip)
+    out_dir = None
     for i in range(len(clips)):
         clock = f"{clips[i][0]}-{clips[i][1]}"
+        #clock = "20250328T175400-20250328T175500"
         rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock.replace('T','')}/OverlappedID=0/backup.smp"
         #recording/20250305000000-20250305000500/OverlappedID=0/backup.smp
         filename = f"{clock}.mp4".replace("-", '_')
@@ -181,16 +297,22 @@ def main(ip, is_fisheye, port=0):
         #out_dir = Path("/home/fo18103/Downloads")
         output_file = out_dir / filename
 
-        file_start = datetime.strptime(output_file.name.split('_')[0], "%Y%m%dT%H%M%S")
+        # file_start = datetime.strptime(output_file.name.split('_')[0], "%Y%m%dT%H%M%S")
+        # clips_range = get_clips_range(out_dir)
 
-        clips_range = get_clips_range(out_dir)
-        if check_file_range_exist(file_start, clips_range):
-            # print(f"File {output_file} already exists. Skipping download.")
+        if output_file.exists():
+            print(f"File {output_file} already exists. Skipping download.")
             continue
+        # if check_file_range_exist(file_start, clips_range):
+        #     # print(f"File {output_file} already exists. Skipping download.")
+        #     continue
 
         for attempt in range(1, MAX_DOWNLOAD_RETRIES + 1):
-            print(f"Attempt {attempt} to download {filename}")
+            print(f"Attempt {attempt} to download {ip} {filename}")
             p_status = download_video(rtsp_url, output_file)
+            if p_status < 0:
+                print(f"Data does not exist. Skipping download.")
+                break
             # if is_fisheye:
             #     filename = f"{clock}.mp4".replace("-", '_')
             #     output_file = out_dir / filename
@@ -209,8 +331,9 @@ def main(ip, is_fisheye, port=0):
             if output_file.exists():
                 duration = get_video_duration(output_file)
                 if duration is None: #file does not exist dont waste time trying to re-download
-                    output_file.unlink()  # Remove bad file
-                    break
+                    print("Duration is not valid")
+                    #output_file.unlink()  # Remove bad file
+                    continue
 
                 print(f"File duration: {duration}")
                 if is_fisheye:
@@ -219,23 +342,31 @@ def main(ip, is_fisheye, port=0):
                     exp_dur = EXPECTED_DURATION_LANDSCAPE
 
                 if duration >= exp_dur:
-                    print(f"File {filename} downloaded successfully with correct duration.")
+                    print(f"File {ip} {filename} downloaded successfully with correct duration.")
                     break
                 else:
-                    print(f"Duration mismatch: Expected {exp_dur}, got {duration}")
-                    if attempt != MAX_DOWNLOAD_RETRIES:
-                        output_file.unlink()  # Remove bad file
+                    print(f"Duration mismatch {ip} {filename}: Expected {exp_dur}, got {duration}")
+                    # if attempt != MAX_DOWNLOAD_RETRIES:
+                    #     output_file.unlink()  # Remove bad file
             else:
-                print("File download failed.")
+                print(f"File {ip} {filename} download failed.")
 
             if attempt == MAX_DOWNLOAD_RETRIES:
-                print(f"Failed to download {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
+                print(f"Failed to download {ip} {filename} with correct duration after {MAX_DOWNLOAD_RETRIES} attempts. Skipping.")
+    if out_dir is not None:
+        print("Quality check...")
+        clips_range = get_clips_range(out_dir)
+        check_gaps(clips_range, port, ip)
 
 if __name__ == "__main__":
-    #main("10.70.66.47", 1, port=5582)
-    # main("10.70.66.40", 1, port=5575)
-    # main("10.70.66.22", 0, 5560)
-    # main("10.70.66.25", 0, port=5563)
+    #main("10.70.66.44", 1, port=5579)
+    #main("10.70.66.40", 1, port=5575)
+    #main("10.70.66.22", 0, 5560)
+    # main("10.70.66.48", 0, 5583)
+    # main("10.70.66.28", 0, 5566)
+    #main("10.70.66.24", 0, 5562)
+    #main("10.70.66.50", 0, 5585)
+    #main("10.70.66.28", 0, port=5566)
     if len(sys.argv) > 1:
         ip = sys.argv[1]
         is_fisheye = sys.argv[2]

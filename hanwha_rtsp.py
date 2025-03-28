@@ -6,7 +6,7 @@ import subprocess
 import socket
 
 CAMERA_LIST_FILE = Path("hanwha.txt")  # List of camera IPs
-BASE_OUTPUT_DIR = Path("/mnt/storage/scratch/cctv/")
+BASE_OUTPUT_DIR = Path("/mnt/storage/cctvnet/")
 CHUNK_DURATION = 20 * 60  # 20 minutes
 SSH_KEY_PATH = "~/.ssh/id_rsa_hanwha"
 SSH_USER = "fo18103"

@@ -53,7 +53,7 @@ def get_ffmpeg_durations(videos):
 
 
 def main():
-    mp4_files = list(Path("/mnt/storage/cctv/").rglob("*.mp4"))
+    mp4_files = list(Path("/mnt/storage/cctvnet/").rglob("*.mp4"))
     print(f"Found {len(mp4_files)} files.")
     df = pd.DataFrame(mp4_files, columns=['FilePath'])
     df['FileSizeBytes'] = df['FilePath'].apply(lambda x: x.stat().st_size)

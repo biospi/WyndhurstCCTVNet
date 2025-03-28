@@ -4,16 +4,16 @@ import time
 
 # List of source folders to copy from
 source_folders = [
-    "/mnt/storage/scratch/cctv/66.28/",
-    "/mnt/storage/scratch/cctv/66.29/",
-    "/mnt/storage/scratch/cctv/66.30/",
-    "/mnt/storage/scratch/cctv/66.31/",
-    "/mnt/storage/scratch/cctv/66.138/",
-    "/mnt/storage/scratch/cctv/66.137/",
+    "/mnt/storage/cctvnet/66.28/",
+    "/mnt/storage/cctvnet/66.29/",
+    "/mnt/storage/cctvnet/66.30/",
+    "/mnt/storage/cctvnet/66.31/",
+    "/mnt/storage/cctvnet/66.138/",
+    "/mnt/storage/cctvnet/66.137/",
 ]
 
 # Destination folder
-destination_folder = Path("/mnt/storage/scratch/footbath/")
+destination_folder = Path("/mnt/storage/footbath/")
 
 # Ensure the destination folder exists
 destination_folder.mkdir(parents=True, exist_ok=True)

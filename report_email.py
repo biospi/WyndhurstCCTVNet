@@ -22,7 +22,7 @@ EMAIL_PASSWORD = "fcij exfy cxyt wrud "
 EMAIL_RECEIVER = ["fo18103@bristol.ac.uk", "mr16115@bristol.ac.uk"]
 
 # Folder Path
-FOLDER_PATH = Path("/mnt/storage/cctv")
+FOLDER_PATH = Path("/mnt/storage/cctvnet")
 
 def get_disk_space():
     """Returns detailed disk space info using 'df -h'."""
