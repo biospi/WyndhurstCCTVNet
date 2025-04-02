@@ -86,6 +86,7 @@ def main():
     df_data["ip_id"] = df_data["ip"].str.split('.').str[1].astype(int)
     df_data = df_data[df_data["ip_id"].isin(HIKVISION + HANWHA)]
     df_data['date'] = pd.to_datetime(df_data['date'])
+    #df_data = df_data[df_data['date'] <= '2025-03-29']
 
     df_data['brand'] = df_data['ip_id'].apply(lambda x: 'HIKVISION' if x in HIKVISION else 'HANWHA')
     df_data = df_data.sort_values(by=["ip_id", "brand"])

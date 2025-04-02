@@ -22,7 +22,7 @@ receiving_server_path = "/mnt/storage/cctvnet/"
 farm_server_user = config["SSH"]["farm_server_user"]
 farm_server_password = config["SSH"]["farm_server_password"]
 
-MIN_FILE_AGE = 60*5
+MIN_FILE_AGE = 60*15
 
 import paramiko
 from pathlib import Path
@@ -244,8 +244,8 @@ def delete_corrupted_files():
 
 if __name__ == "__main__":
     #delete_files_one_by_one()
-    delete_corrupted_files()
-    #main()
+    #delete_corrupted_files()
+    main()
 
 
 #nohup sshpass -p 'Mojjo@2015' rsync -avz --ignore-existing fo18103@IT107029.users.bris.ac.uk:/mnt/storage/cctv/ /mnt/storage/cctv/ > rsync.log 2>&1 &

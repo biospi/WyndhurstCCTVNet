@@ -38,7 +38,7 @@ def extract_ip(path):
     return match.group(0) if match else None
 
 
-def get_latest_file(folder_path):
+def get_latest_file(folder_path, n=-1):
     """Finds the most recent file in the given folder."""
 
     mp4_files = list(folder_path.rglob("*.mp4"))
@@ -51,10 +51,10 @@ def get_latest_file(folder_path):
     for ip, group_df in grouped_dfs.items():
         print(f"IP: {ip}")
         print(group_df, "\n")
-        last_files.append(group_df.values[-1])
+        last_files.append(group_df.values[n])
         log = "unknown"
         try:
-            log = f"Ip:{ip} last:{group_df.values[-1][0].as_posix()}\n"
+            log = f"Ip:{ip} last:{group_df.values[n][0].as_posix()}\n"
         except Exception as e:
             print(e)
         logs.append(log)

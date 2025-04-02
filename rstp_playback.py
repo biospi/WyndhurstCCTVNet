@@ -12,7 +12,7 @@ from storage_info import parse_datetime
 from utils import run_cmd, SOURCE_PATH
 
 MAX_ONVIF_RETRY = 5
-MAX_DOWNLOAD_RETRIES = 6
+MAX_DOWNLOAD_RETRIES = 1
 EXPECTED_DURATION_LANDSCAPE = 298
 EXPECTED_DURATION_FISH = 298
 USERNAME = "admin"
@@ -287,8 +287,10 @@ def main(ip, is_fisheye, port=0):
     # clips_range = get_clips_range(out_dir)
     # check_gaps(clips_range, port, ip)
     out_dir = None
-    for i in range(len(clips)):
+    i = 0
+    while i < len(clips):
         clock = f"{clips[i][0]}-{clips[i][1]}"
+        i += 1
         #clock = "20250328T175400-20250328T175500"
         rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock.replace('T','')}/OverlappedID=0/backup.smp"
         #recording/20250305000000-20250305000500/OverlappedID=0/backup.smp
@@ -346,6 +348,7 @@ def main(ip, is_fisheye, port=0):
                     break
                 else:
                     print(f"Duration mismatch {ip} {filename}: Expected {exp_dur}, got {duration}")
+                    i+= 12 #move to the next hour
                     # if attempt != MAX_DOWNLOAD_RETRIES:
                     #     output_file.unlink()  # Remove bad file
             else:
