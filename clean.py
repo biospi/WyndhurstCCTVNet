@@ -61,5 +61,5 @@ def main(input_dir):
 
 
 if __name__ == "__main__":
-    input_dir = Path("/mnt/storage/cctvnet/66.1/2025Mar30")
+    input_dir = Path("/mnt/storage/cctvnet/66.17/2025Mar25")
     main(input_dir)

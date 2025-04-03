@@ -11,8 +11,9 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import yagmail
-import storage_info
 
+import farm_map
+import storage_info
 
 # Email Configuration
 SMTP_SERVER = "smtp.gmail.com"  # Replace with your SMTP server
@@ -97,9 +98,12 @@ def report_status():
     email_body = f"{disk_space}\n\n{latest_file}"
     storage_info.main()
     folder_path = Path("/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/storage")
-    png_files = list(folder_path.rglob("*.png"))
-    png_files.sort()
-    send_email("Daily Storage Report", email_body, attachment_path=[png_files[-1], folder_path / "0_storage_total.png"])
+    heatmap_storage_files = list(folder_path.rglob("*.png"))
+    heatmap_storage_files.sort()
+    farm_map.main()
+    map_files = list(Path("/mnt/storage/thumbnails/map").rglob("*.png"))
+    map_files.sort()
+    send_email("Daily Storage Report", email_body, attachment_path=[heatmap_storage_files[-1], map_files[-1], folder_path / "0_storage_total.png"])
 
 # Schedule the script to run daily at 1 PM
 schedule.every().day.at("08:00").do(report_status)

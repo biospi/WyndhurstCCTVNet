@@ -7,10 +7,27 @@ import seaborn as sns
 import subprocess
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib.patches import Patch
+
+
 matplotlib.use("Agg")  # Use a non-interactive backend
 import matplotlib.pyplot as plt
 
-from utils import is_float
+from utils import is_float, MAP
+
+tab10 = plt.get_cmap("tab10")
+colors = [tab10(i) for i in range(tab10.N)]
+
+location_color_map = {
+    "Backbarn Top": colors[0],
+    "Backbarn Bottom": colors[1],
+    "Other": colors[2],
+    "Backbarn Down Cubicles": colors[3],
+    "Transition Pen": colors[4],
+    "Race": colors[5],
+    "Mobility": colors[6],
+    "Backbarn Up Cubicles": colors[7]
+}
 
 HIKVISION = [1, 3, 4, 5, 6, 8, 9, 11, 33, 34, 125, 126, 128, 130, 131, 132, 133, 136, 137, 138, 139, 156]
 
@@ -87,35 +104,55 @@ def main():
     df_data = df_data[df_data["ip_id"].isin(HIKVISION + HANWHA)]
     df_data['date'] = pd.to_datetime(df_data['date'])
     #df_data = df_data[df_data['date'] <= '2025-03-29']
+    locations = []
+    for ip in df_data["ip_id"]:
+        loc = MAP[ip]['location']
+        locations.append(loc.title())
+    df_data['location'] = locations
 
     df_data['brand'] = df_data['ip_id'].apply(lambda x: 'HIKVISION' if x in HIKVISION else 'HANWHA')
-    df_data = df_data.sort_values(by=["ip_id", "brand"])
-
+    # df_data = df_data.sort_values(by=["ip_id", "brand"])
+    df_data = df_data.sort_values(by='location')
     heatmap_data = df_data.pivot_table(index='ip', columns='date', values='storage')
 
     #heatmap_data.loc["total"] = heatmap_data.sum()
-    plt.figure(figsize=(20, 8*2))
+    plt.figure(figsize=(10, 16))
     a = HIKVISION + HANWHA
-    ip_order = [f"66.{x}" for x in a]
+    ip_order = [f"66.{x}" for x in df_data['ip_id'].unique().tolist()]
     heatmap_data.index = pd.Categorical(heatmap_data.index, categories=ip_order, ordered=True)
     heatmap_data = heatmap_data.sort_index()
 
-    ax = sns.heatmap(heatmap_data, annot=True, fmt=".0f", cbar_kws={'label': 'Storage (GB)'})
+    ax = sns.heatmap(heatmap_data, annot=True, cmap="viridis", fmt=".0f", cbar_kws={'label': 'Storage (GB)'})
     ax.set_xticklabels(heatmap_data.columns.strftime('%d-%m-%Y'))
-    plt.title(f'Storage Usage Heatmap HIKVISION ({len(HIKVISION)}) HANWHA ({len(HANWHA)})')
+    plt.title(f'Storage Usage Heatmap | HIKVISION ({len(HIKVISION)}) HANWHA ({len(HANWHA)})')
     plt.xlabel('Date')
 
     #ax.get_yticklabels()[-1].set_label("Total")
-    for label in ax.get_yticklabels()[:-1]:
+    for label in ax.get_yticklabels():
         ip_id = int(label.get_text().split('.')[1])
-        if ip_id in HIKVISION:
-            label.set_color('blue')
-        elif ip_id in HANWHA:
-            label.set_color('green')
+        # if ip_id in HIKVISION:
+        #     label.set_color('blue')
+        # elif ip_id in HANWHA:
+        #     label.set_color('green')
+        location = df_data[df_data["ip_id"] == ip_id]["location"].values[0]
+        label.set_color(location_color_map.get(location, "black"))
 
     plt.ylabel('IP')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
+
+    legend_labels = df_data["location"].unique().tolist()
+    legend_colors = colors[0:len(legend_labels)]
+    legend_handles = [Patch(facecolor=color, edgecolor='black', label=label) for color, label in
+                      zip(legend_colors, legend_labels)]
+    ax.legend(handles=legend_handles, loc='upper right', ncol=len(legend_labels),
+               frameon=True)
+    legend_labels = ["Back Barn Cubicle (20)", "Milking (5)", "Race Foot bath (7)", "Transition Pen 4 (12)", "Back Barn Feed Face (14)"]
+    legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4]]
+    legend_handles = [Patch(facecolor=color, edgecolor='black', label=label) for color, label in
+                      zip(legend_colors, legend_labels)]
+    ax.legend(handles=legend_handles, loc='upper center', fontsize=10, frameon=False, ncol=len(legend_labels), bbox_to_anchor=(0.5, 1.05))
     plt.tight_layout()
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"storage_{timestamp}.png"
 
@@ -123,7 +160,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     filepath = out_dir / filename
     print(f"Writing {filepath}")
-    plt.savefig(filepath)
+    plt.savefig(filepath, bbox_inches='tight',  dpi=600)
 
     filename = f"data_storage_{timestamp}.csv"
     filepath = out_dir / filename
@@ -136,20 +173,17 @@ def main():
     total_df = pd.DataFrame([total_storage], index=["Total"])
 
     # Plot the single-row heatmap
-    plt.figure(figsize=(20, 3))
-    ax = sns.heatmap(total_df, annot=True, fmt=".0f", cbar_kws={'label': 'Total Storage (GB)'})
+    plt.figure(figsize=(10, 3))
+    ax = sns.heatmap(total_df, annot=True, fmt=".0f", cmap="viridis", cbar_kws={'label': 'Total Storage (GB)'})
     ax.set_xticklabels(total_df.columns.strftime('%d-%m-%Y'))
     plt.title("Total Storage Usage Heatmap")
     plt.xlabel("Date")
     plt.ylabel("")
     plt.tight_layout()
-
-    # Save the heatmap
     total_filename = f"0_storage_total.png"
     total_filepath = out_dir / total_filename
     print(f"Writing {total_filepath}")
-    plt.savefig(total_filepath)
-
+    plt.savefig(total_filepath, bbox_inches='tight', dpi=600)
 
 
 if __name__ == "__main__":
