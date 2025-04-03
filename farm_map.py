@@ -61,7 +61,7 @@ def build_map():
     image_dir = Path('/mnt/storage/thumbnails/hd')
     fig, ax = plt.subplots(figsize=(60, 5))
     ax.set_xlim(0, 36)
-    ax.set_ylim(0, 13)
+    ax.set_ylim(0, 15)
     ax.axis('off')
 
     cpt_hanwha = 0
@@ -95,35 +95,9 @@ def build_map():
         if rot == -1:
             img = np.fliplr(img)
 
-        # if ip in [48, 54, 46, 45, 47, 49, 50, 141, 53, 52]:
-        #     offset_c, offset_r = 0.5, -0.3
-        #     color = colors[0]
-        # if ip in [36, 42, 35, 40, 37, 44, 38, 41, 43, 39]:
-        #     offset_c, offset_r = 0.5, 1.1
-        #     color = colors[0]
-        # if ip in [156, 132, 5, 9, 4]:
-        #     offset_c, offset_r = 0.5, 0.6
-        #     color = colors[1]
-        #     img = np.rot90(img)
-        # if ip in [137]:
-        #     offset_c, offset_r = 0.5, 0.6
-        #     color = colors[1]
-        #     img = np.rot90(img)
-        # if ip in [28, 34, 138, 29, 30, 31]:
-        #     offset_c, offset_r = 0.5, 0.6
-        #     color = colors[1]
-        #     img_extent = [col, col + 2, row, row + 1]
-        #
-        # if ip in [137, 28, 34, 138, 29, 30, 31]:
-        #     offset_c, offset_r = 0.5, 0.76
-        #     color = colors[2]
-        # if ip in [17, 18, 20, 22, 24, 26, 16, 19, 21, 23, 25, 27]:
-        #     offset_c, offset_r = 0.5, 0.76
-        #     color = colors[3]
-        # if ip in [128, 133, 1, 3, 33, 130, 139, 8, 11, 125, 6, 131, 136, 126]:
-        #     offset_c, offset_r = 0.5, 0.6
-        #     color = colors[4]
-
+        if rot == -2:
+            img = np.fliplr(img)
+            img = np.flipud(img)
 
         if row is not None and col is not None:
             # Get the aspect ratio of the image
@@ -145,49 +119,21 @@ def build_map():
     output_file = map_dir / f"map_{timestamp}.png"
     #plt.savefig(output_file, bbox_inches='tight', pad_inches=0)
     #plt.title(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}\n Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha} ", fontsize=14, fontweight='bold', pad=0, color='black')
-    fig.suptitle(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}| Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha} ",
+    fig.suptitle(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}| Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha}, Total {cpt_hikvision + cpt_hanwha} ",
                  fontsize=10,
                  fontweight='bold',
                  y=0.9,  # Moves the title downward (default ~1.0)
                  color='black')
 
-    legend_labels = ["Back Barn Cubicle (20)", "Milking (5)", "Race Foot bath (7)", "Transition Pen 4 (12)", "Back Barn Feed Face (14)"]
-    legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4]]
-    legend_handles = [Patch(facecolor=color, edgecolor='black', label=label) for color, label in
+    legend_labels = ["Milking (5)", "Race Foot bath (7)", "Quarantine (2)", "Transition Pen 4 (12)", "Back Barn Cubicle (20)", "Back Barn Feed Face (14)"]
+    legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5]]
+    legend_handles = [Patch(facecolor=color, edgecolor=color, label=label) for color, label in
                       zip(legend_colors, legend_labels)]
-    # ax.legend(handles=legend_handles, loc='lower right', fontsize=8, frameon=False,
-    #           bbox_to_anchor=(0.95, 0.12))
+    ax.legend(handles=legend_handles, loc='lower left', fontsize=8, frameon=False, ncol=3, bbox_to_anchor=(0.1, 0.1))
     plt.tight_layout()
     plt.savefig(output_file, bbox_inches='tight', pad_inches=0, dpi=600)
     plt.close()
     print(output_file)
-
-# def build_map():
-#     image_dir = Path('/mnt/storage/thumbnails/sd')
-#     fig, ax = plt.subplots(figsize=(40, 5))
-#     ax.set_xlim(0, 16)
-#     ax.set_ylim(0, 10)
-#     ax.axis('off')
-#     for idx, item in enumerate(MAP.items()):
-#         ip = item[1]["ip"]
-#         location = item[1]["location"]
-#         brand = item[1]["brand"]
-#         row, col = item[1]["position"]
-#         img_path = image_dir / f"{ip}.jpg"
-#         try:
-#             img = mpimg.imread(img_path)
-#         except Exception as e:
-#             print(f"Error reading {img_path}: {e}")
-#             img = mpimg.imread("black.jpg")
-#
-#         if row is not None and col is not None:
-#             ax.imshow(img, extent=[col, col + 1, row, row + 1])
-#     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-#     map_dir = Path('/mnt/storage/thumbnails/map')
-#     map_dir.mkdir(parents=True, exist_ok=True)
-#     output_file = map_dir / f"map_{timestamp}.png"
-#     plt.savefig(output_file, bbox_inches='tight', pad_inches=0)
-#     plt.close()
 
 def main():
     # base_folder = Path('/mnt/storage/thumbnails')
