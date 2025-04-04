@@ -14,6 +14,7 @@ import yagmail
 
 import farm_map
 import storage_info
+from utils import get_latest_file
 
 # Email Configuration
 SMTP_SERVER = "smtp.gmail.com"  # Replace with your SMTP server
@@ -32,34 +33,6 @@ def get_disk_space():
         return f"Disk Space Report:\n{result.stdout}"
     except subprocess.CalledProcessError as e:
         return f"Error retrieving disk space info: {e}"
-
-
-def extract_ip(path):
-    match = re.search(r"66\.\d+", str(path))  # Extract "66.xxx"
-    return match.group(0) if match else None
-
-
-def get_latest_file(folder_path, n=-1):
-    """Finds the most recent file in the given folder."""
-
-    mp4_files = list(folder_path.rglob("*.mp4"))
-    df = pd.DataFrame(mp4_files, columns=["path"])
-
-    df["ip"] = df["path"].apply(extract_ip)
-    grouped_dfs = {ip: group.drop(columns="ip") for ip, group in df.groupby("ip")}
-    last_files = []
-    logs = []
-    for ip, group_df in grouped_dfs.items():
-        print(f"IP: {ip}")
-        print(group_df, "\n")
-        last_files.append(group_df.values[n])
-        log = "unknown"
-        try:
-            log = f"Ip:{ip} last:{group_df.values[n][0].as_posix()}\n"
-        except Exception as e:
-            print(e)
-        logs.append(log)
-    return logs
 
 
 def send_email(subject, body, attachment_path=None):

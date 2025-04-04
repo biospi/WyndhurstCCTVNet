@@ -5,7 +5,7 @@ from pathlib import Path
 import configparser
 import pandas as pd
 from datetime import datetime, timedelta
-import re
+
 
 from storage_info import get_video_duration
 from utils import is_float

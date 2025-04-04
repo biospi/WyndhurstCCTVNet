@@ -1,12 +1,8 @@
-import paramiko
-import os
-import time
-from pathlib import Path
-import configparser
-import pandas as pd
+import re
+import subprocess
 from datetime import datetime
 
-
+import pandas as pd
 
 SOURCE_PATH = "/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/"
 
@@ -19,7 +15,7 @@ MAP = {
     4: {"brand": "hikvision", "ip": 4, "location": "other", "position": (1, 26, 1, 1, 1, 0.5, 1.8, 0)},
 
     137: {"brand": "hikvision", "ip": 137, "location": "other", "position": (5, 32, 2, 1, 1, 2.5, 1.8, 1)},
-    28: {"brand": "hanwa", "ip": 28, "location": "race", "position": (5, 30, 2, 0, 0, 1, 1.15, 1)},
+    28: {"brand": "hanwa", "ip": 28, "location": "race", "position": (5, 30, 2, 0, 0, 1, 1.6, 1)},
     29: {"brand": "hanwa", "ip": 29, "location": "race", "position": (5, 28, 2, 0, 0, 1, 1.6, 1)},
     30: {"brand": "hanwa", "ip": 30, "location": "race", "position": (5, 26, 2, 0, 0, 1, 1.6, 1)},
     31: {"brand": "hanwa", "ip": 31, "location": "race", "position": (5, 24, 2, 0, 0, 1, 1.6, 1)},
@@ -80,10 +76,36 @@ MAP = {
     3: {"brand": "hikvision", "ip": 3, "location": "backbarn top", "position": (7, 10, 3, 1, -2, 1.5, 1.7, 5)},
     33: {"brand": "hikvision", "ip": 33, "location": "backbarn top", "position": (7, 7, 3, 1, -2, 1.5, 1.7, 5)},
     130: {"brand": "hikvision", "ip": 130, "location": "backbarn top", "position": (7, 4, 3, 1, -2, 1.5, 1.7, 5)},
-    139: {"brand": "hikvision", "ip": 139, "location": "backbarn top", "position": (7, 1, 3, 1, -2, 1.5, 1.7, 5)},
-
-
+    139: {"brand": "hikvision", "ip": 139, "location": "backbarn top", "position": (7, 1, 3, 1, -2, 1.5, 1.7, 5)}
 }
+
+
+def extract_ip(path):
+    match = re.search(r"66\.\d+", str(path))  # Extract "66.xxx"
+    return match.group(0) if match else None
+
+
+def get_latest_file(folder_path, n=-1):
+    """Finds the most recent file in the given folder."""
+
+    mp4_files = list(folder_path.rglob("*.mp4"))
+    df = pd.DataFrame(mp4_files, columns=["path"])
+
+    df["ip"] = df["path"].apply(extract_ip)
+    grouped_dfs = {ip: group.drop(columns="ip") for ip, group in df.groupby("ip")}
+    last_files = []
+    logs = []
+    for ip, group_df in grouped_dfs.items():
+        print(f"IP: {ip}")
+        print(group_df, "\n")
+        last_files.append(group_df.values[n])
+        log = "unknown"
+        try:
+            log = f"Ip:{ip} last:{group_df.values[n][0].as_posix()}\n"
+        except Exception as e:
+            print(e)
+        logs.append(log)
+    return logs
 
 
 def is_float(string):
@@ -94,11 +116,6 @@ def is_float(string):
         return True
     except ValueError:
         return False
-
-from pathlib import Path
-import subprocess
-from datetime import datetime
-import subprocess as sp
 
 
 def run_cmd(cmd, i=0, tot=0, verbose=True):

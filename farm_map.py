@@ -6,10 +6,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from PIL.ImageChops import offset
 from matplotlib.patches import Patch
-# from report_email import get_latest_file
-from utils import MAP
+from utils import MAP, get_latest_file
 import numpy as np
 import cv2
 
@@ -119,7 +117,7 @@ def build_map():
     output_file = map_dir / f"map_{timestamp}.png"
     #plt.savefig(output_file, bbox_inches='tight', pad_inches=0)
     #plt.title(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}\n Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha} ", fontsize=14, fontweight='bold', pad=0, color='black')
-    fig.suptitle(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}| Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha}, Total {cpt_hikvision + cpt_hanwha} ",
+    fig.suptitle(f"Whyndhurst Farm {datetime.now().strftime('%d/%m/%Y %H:%M')}| Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha}, Total {cpt_hikvision + cpt_hanwha} ",
                  fontsize=10,
                  fontweight='bold',
                  y=0.9,  # Moves the title downward (default ~1.0)
@@ -135,20 +133,83 @@ def build_map():
     plt.close()
     print(output_file)
 
-def main():
-    # base_folder = Path('/mnt/storage/thumbnails')
-    # hd_folder = base_folder / 'hd'
-    # sd_folder = base_folder / 'sd'
-    #
-    # data = get_latest_file(Path("/mnt/storage/cctvnet/"), n=-20)
-    #
-    # paths = [d.split('last:')[1].strip() for d in data]  # Extract paths properly
-    # print("Processing videos:", paths)
-    # ips = [d.split('Ip:')[1].strip().split(' ')[0].replace('66.', '') for d in data]
-    #
-    # for ip, video_path in zip(ips, paths):
-    #     extract_thumbnail(ip, video_path, hd_folder, sd_folder)
 
+def update_thumbnails_from_storage():
+    base_folder = Path('/mnt/storage/thumbnails')
+    hd_folder = base_folder / 'hd'
+    sd_folder = base_folder / 'sd'
+
+    data = get_latest_file(Path("/mnt/storage/cctvnet/"), n=-20)
+
+    paths = [d.split('last:')[1].strip() for d in data]  # Extract paths properly
+    print("Processing videos:", paths)
+    ips = [d.split('Ip:')[1].strip().split(' ')[0].replace('66.', '') for d in data]
+
+    for ip, video_path in zip(ips, paths):
+        extract_thumbnail(ip, video_path, hd_folder, sd_folder)
+
+
+def update_thumbnails_from_rstp():
+    with Path("hanwha.txt").open("r") as file:
+        camera_ips = [line.strip() for line in file if line.strip()]
+    for idx, camera_ip in enumerate(camera_ips):
+        ip, fisheye, port = camera_ip.split()
+        rtsp_url = f"rtsp://admin:Ocs881212@localhost:{port}/profile2/media.smp"
+        print(f"Downloading {rtsp_url}")
+        filename = f"{ip.split('.')[-1]}.jpg"
+        out_dir = Path('/mnt/storage/thumbnails/hd/')
+        out_dir.mkdir(parents=True, exist_ok=True)
+        filepath = out_dir / filename
+        if filepath.exists():
+            filepath.unlink()
+
+        ffmpeg_command = [
+            "ffmpeg",
+            "-y",
+            "-rtsp_transport", "tcp",
+            "-i", rtsp_url,
+            "-frames:v", "1",
+            "-q:v", "2",
+            filepath.as_posix()
+        ]
+        try:
+            print("Running:", " ".join(ffmpeg_command))
+            subprocess.run(ffmpeg_command, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error extracting thumbnail for {rtsp_url}: {e}")
+
+    with Path("hikvision.txt").open("r") as file:
+        camera_ips = [line.strip() for line in file if line.strip()]
+    for idx, camera_ip in enumerate(camera_ips):
+        ip, fisheye, port = camera_ip.split()
+        rtsp_url = f"rtsp://admin:ocs881212@localhost:{port}/Streaming/channels/101"
+        print(f"Downloading {rtsp_url}")
+        filename = f"{ip.split('.')[-1]}.jpg"
+        out_dir = Path('/mnt/storage/thumbnails/hd/')
+        out_dir.mkdir(parents=True, exist_ok=True)
+        filepath = out_dir / filename
+        if filepath.exists():
+            filepath.unlink()
+
+        ffmpeg_command = [
+            "ffmpeg",
+            "-y",
+            "-rtsp_transport", "tcp",
+            "-i", rtsp_url,
+            "-frames:v", "1",
+            "-q:v", "2",
+            filepath.as_posix()
+        ]
+        try:
+            print("Running:", " ".join(ffmpeg_command))
+            subprocess.run(ffmpeg_command, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error extracting thumbnail for {rtsp_url}: {e}")
+
+
+def main():
+    update_thumbnails_from_storage()
+    update_thumbnails_from_rstp()
     build_map()
 
 

@@ -9,6 +9,7 @@ def main():
     print("Starting SSH tunnels...")
     print(ssh_tunnel_script)
     subprocess.run(ssh_tunnel_script, shell=True, check=True)
+    subprocess.run(f"{SOURCE_PATH}open_ssh_tunnel_hikvision.sh", shell=True, check=True)
 
     # print("Starting report_email.py in background...")
     # subprocess.Popen(["python3", f"{source_path}report_email.py"])
