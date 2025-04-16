@@ -35,7 +35,7 @@ if __name__ == "__main__":
     metadata_dir.mkdir(exist_ok=True)
     while True:
         start_time = time.time()
-        main("hanwha.txt")
+        main("hanwha_ip_study.txt")
         duration = time.time() - start_time
         timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
         csv_file = metadata_dir / f"iteration_{timestamp}.csv"

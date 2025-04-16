@@ -338,6 +338,11 @@ def main(ip, is_fisheye, port=0):
                     continue
 
                 print(f"File duration: {duration}")
+                #skip duration check for camera with motion detection
+                if ip in ["10.70.66.31", "10.70.66.30", "10.70.66.29", "10.70.66.28"]:
+                    print(f"Motion detection enabled. Skipping duration check for {ip}.")
+                    continue
+
                 if is_fisheye:
                     exp_dur = EXPECTED_DURATION_FISH
                 else:
@@ -362,6 +367,7 @@ def main(ip, is_fisheye, port=0):
         check_gaps(clips_range, port, ip)
 
 if __name__ == "__main__":
+    #main("10.70.66.27", 0, port=5565)
     #main("10.70.66.44", 1, port=5579)
     #main("10.70.66.40", 1, port=5575)
     #main("10.70.66.22", 0, 5560)
@@ -370,6 +376,8 @@ if __name__ == "__main__":
     #main("10.70.66.24", 0, 5562)
     #main("10.70.66.50", 0, 5585)
     #main("10.70.66.28", 0, port=5566)
+    #main("10.70.66.39", 1, port=5574)
+    #main("10.70.66.16", 0, port=5554)
     if len(sys.argv) > 1:
         ip = sys.argv[1]
         is_fisheye = sys.argv[2]
