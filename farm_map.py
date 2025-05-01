@@ -10,6 +10,7 @@ from matplotlib.patches import Patch
 from utils import MAP, get_latest_file, get_first_file_after
 import numpy as np
 import cv2
+import matplotlib.patches as patches
 
 
 def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
@@ -61,6 +62,20 @@ def build_map():
     ax.set_xlim(0, 36)
     ax.set_ylim(0, 15)
     ax.axis('off')
+
+    # Preprocess top 2 visual rows (highest row values)
+    all_rows = sorted({item[1]["position"][0] for item in MAP.items()}, reverse=True)
+    top_rows = all_rows[:2]
+    # Collect all thumbnails in top 2 rows
+    all_top_thumbs = []
+    for item in MAP.items():
+        row, col, w, h, *_ = item[1]["position"]
+        if row in top_rows:
+            all_top_thumbs.append((col, row, w, h))
+
+    # Sort left to right (by col), take first 12
+    group1_boxes = sorted(all_top_thumbs, key=lambda x: x[0])[:12]
+    group2_boxes = sorted(all_top_thumbs, key=lambda x: x[0])[:12]
 
     cpt_hanwha = 0
     cpt_hikvision = 0
@@ -125,6 +140,57 @@ def build_map():
                 label = f"{label}*"
             ax.text(text_position[0], text_position[1], label, ha='center', va='bottom', fontsize=5, color=color, weight='bold')
 
+        # Track thumbnails in the top 2 rows, limit to first 12
+        if col >=2 and col <= 27 and row >= 9 and  row <= 11 :
+            img_box = (col, row, w, h+1)
+            group1_boxes.append(img_box)
+
+        if col >=2 and col <= 20 and row >= 4.5 and row < 7 :
+            img_box = (col, row, w, h)
+            group2_boxes.append(img_box)
+
+    if group1_boxes:
+        lefts = [col for col, row, w, h in group1_boxes]
+        rights = [col + w for col, row, w, h in group1_boxes]
+        bottoms = [row for col, row, w, h in group1_boxes]
+        tops = [row + h for col, row, w, h in group1_boxes]
+
+        min_col = min(lefts)
+        max_col = max(rights)
+        min_row = min(bottoms)
+        max_row = max(tops)
+
+        # Draw dashed rectangle
+        rect = patches.Rectangle((min_col, min_row), max_col - min_col, max_row - min_row,
+                                 linewidth=1.5, edgecolor='c', facecolor='none', linestyle='--')
+        ax.add_patch(rect)
+
+        # Add label above
+        ax.text(2.3, max_row + 0.5, 'Group 1',
+                ha='center', va='bottom', fontsize=10, color='c', weight='bold')
+
+    if group2_boxes:
+        lefts = [col for col, row, w, h in group2_boxes]
+        rights = [col + w for col, row, w, h in group2_boxes]
+        bottoms = [row for col, row, w, h in group2_boxes]
+        tops = [row + h for col, row, w, h in group2_boxes]
+
+        min_col = min(lefts)
+        max_col = max(rights)
+        min_row = min(bottoms)
+        max_row = max(tops)
+        print(min_col, max_col, min_row, max_row)
+        max_row = 8.7
+
+        # Draw dashed rectangle
+        rect = patches.Rectangle((min_col, min_row), max_col - min_col, max_row - min_row,
+                                 linewidth=1.5, edgecolor='m', facecolor='none', linestyle='--')
+        ax.add_patch(rect)
+
+        # Add label above
+        ax.text(2.3, min_row - 0.9, 'Group 2',
+                ha='center', va='bottom', fontsize=10, color='m', weight='bold')
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     map_dir = Path('/mnt/storage/thumbnails/map')
     map_dir.mkdir(parents=True, exist_ok=True)
@@ -137,8 +203,10 @@ def build_map():
                  y=0.9,  # Moves the title downward (default ~1.0)
                  color='black')
 
-    legend_labels = ["Milking (5)", "Race Foot bath (7)", "Quarantine (2)", "Transition Pen (6)", "Back Barn Cubicle (20)", "Back Barn Feed Face (14)", "Other Pen (6)"]
-    legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6]]
+    legend_labels = ["Milking (5)", "Race (7)", "Other (3)", "Transition Pen (6)", "Main Barn Cubicle 1 (6)",
+                     "Back Barn Cubicle 1 (10)", "Back Barn Cubicles 2 (10)", "Back Barn Feed Face 2 (7)",
+                     "Back Barn Feed Face 1 (10)"]
+    legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6], colors[7], colors[8]]
     legend_handles = [Patch(facecolor=color, edgecolor=color, label=label) for color, label in
                       zip(legend_colors, legend_labels)]
     ax.legend(handles=legend_handles, loc='lower left', fontsize=8, frameon=False, ncol=3, bbox_to_anchor=(0.1, 0.1))

@@ -37,6 +37,38 @@ def create_output_directory(output_file: str, ip_tag: str):
     #print(output_dir)
     return output_dir
 
+def generate_perfect_5min_ranges_(start: str, end: str) -> list:
+    """Generate 5-minute aligned recording ranges from start to end timestamps,
+    discarding any time between 00:00 and 04:00."""
+
+    # Convert input strings to datetime objects
+    start_dt = datetime.strptime(start, "%Y-%m-%dT%H:%M:%SZ")
+    end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ")
+
+    # Align start time to the nearest 5-minute mark
+    aligned_start_dt = start_dt.replace(second=0, microsecond=0)
+    if aligned_start_dt.minute % 5 != 0:
+        aligned_start_dt += timedelta(minutes=(5 - aligned_start_dt.minute % 5))  # Move up to next 5-minute mark
+
+    step = timedelta(minutes=5)
+    ranges = []
+    ranges_datetime = []
+    current_dt = aligned_start_dt
+
+    while current_dt < end_dt:
+        next_dt = current_dt + step
+        if next_dt > end_dt:
+            break  # Stop if the next step exceeds the end time
+
+        # Discard intervals between 00:00 and 04:00
+        if not (0 <= current_dt.hour < 4):
+            ranges.append([current_dt.strftime('%Y%m%dT%H%M%S'), next_dt.strftime('%Y%m%dT%H%M%S')])
+            ranges_datetime.append([current_dt, next_dt])
+
+        current_dt = next_dt  # Move to the next 5-minute interval
+
+    return ranges, ranges_datetime
+
 def generate_perfect_5min_ranges(start: str, end: str) -> list:
     """Generate 5-minute aligned recording ranges from start to end timestamps."""
 
@@ -276,10 +308,13 @@ def main(ip, is_fisheye, port=0):
     # subprocess.run(ssh_tunnel_script, shell=True, check=True)
 
     now = datetime.now()
-    earliest_recording = (now - timedelta(days=3, hours=now.hour, minutes=now.minute, seconds=now.second)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    earliest_recording = (now - timedelta(days=4, hours=now.hour, minutes=now.minute, seconds=now.second)).strftime('%Y-%m-%dT%H:%M:%SZ')
     latest_recording = now.strftime('%Y-%m-%dT%H:%M:%SZ')
-    clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
+    clips, _ = generate_perfect_5min_ranges_(earliest_recording, latest_recording)
     print(f"Found {len(clips)} recordings. First clip: [{clips[0]}] Last clip: [{clips[-1]}]")
+    if ip in ["10.70.66.31", "10.70.66.30", "10.70.66.29", "10.70.66.28"]:
+        print(f"Motion detection enabled. {ip}.")
+        clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
 
     # clock = f"{clips[0][0]}-{clips[0][1]}"
     # filename = f"{clock}.mp4".replace("-", '_')
