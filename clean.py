@@ -88,7 +88,7 @@ def main(input_dir):
         move_path =  Path(video.as_posix().replace('cctvnet', 'archive'))
         out_dir = move_path.parent
         out_dir.mkdir(parents=True, exist_ok=True)
-        video.rename(move_path)
+        #video.rename(move_path)
 
     print(f"cpt_keep={cpt_keep} cpt_move={cpt_move}")
 
@@ -127,10 +127,9 @@ def remove_overlap(file_list):
 
 if __name__ == "__main__":
 
-    dates = ["2025Apr02", "2025Apr03", "2025Apr04", "2025Apr05", "2025Apr06", "2025Apr07", "2025Apr08", "2025Apr09",
-             "2025Apr10", "2025Apr11", "2025Apr12", "2025Apr13", "2025Apr14", "2025Apr15"]
+    dates = ["2025Apr30", "2025May29", "2025May01"]
     #ips = ['66.33', '66.1', '66.139', '66.133', '66.130', '66.128']
-    ips = ["66.34"]
+    ips = ["66.28"]
     for ip in ips:
         for date in dates:
             main(Path(f"/mnt/storage/cctvnet/{ip}/{date}"))

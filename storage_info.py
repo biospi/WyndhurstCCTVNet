@@ -279,17 +279,17 @@ def main():
     total_df = pd.DataFrame([total_storage], index=["Total"])
 
     # Plot the single-row heatmap
-    plt.figure(figsize=(10, 3))
-    ax = sns.heatmap(total_df, annot=True, fmt=".0f", cmap="viridis", cbar_kws={'label': 'Total Storage (GB)'})
-    ax.set_xticklabels(total_df.columns.strftime('%d-%m-%Y'))
-    plt.title("Total Storage Usage Heatmap")
-    plt.xlabel("Date")
-    plt.ylabel("")
-    plt.tight_layout()
-    total_filename = f"0_storage_total.png"
-    total_filepath = out_dir / total_filename
-    print(f"Writing {total_filepath}")
-    plt.savefig(total_filepath, bbox_inches='tight', dpi=600)
+    # plt.figure(figsize=(10, 3))
+    # ax = sns.heatmap(total_df, annot=True, fmt=".0f", cmap="viridis", cbar_kws={'label': 'Total Storage (GB)'})
+    # ax.set_xticklabels(total_df.columns.strftime('%d-%m-%Y'))
+    # plt.title("Total Storage Usage Heatmap")
+    # plt.xlabel("Date")
+    # plt.ylabel("")
+    # plt.tight_layout()
+    # total_filename = f"0_storage_total.png"
+    # total_filepath = out_dir / total_filename
+    # print(f"Writing {total_filepath}")
+    # plt.savefig(total_filepath, bbox_inches='tight', dpi=600)
 
 if __name__ == "__main__":
     main()
