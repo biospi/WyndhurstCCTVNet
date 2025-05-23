@@ -227,7 +227,7 @@ def main():
     # Transpose heatmap: Dates on Y-axis, IPs on X-axis
     heatmap_data = df_data.pivot_table(index='date', columns='ip', values='storage')
 
-    plt.figure(figsize=(18, 10))  # Swap aspect ratio for landscape format
+    plt.figure(figsize=(18, 20))  # Swap aspect ratio for landscape format
     ip_order = [f"66.{x}" for x in df_data['ip_id'].unique().tolist()]
     heatmap_data.columns = pd.Categorical(heatmap_data.columns, categories=ip_order, ordered=True)
     heatmap_data = heatmap_data.sort_index(axis=1)

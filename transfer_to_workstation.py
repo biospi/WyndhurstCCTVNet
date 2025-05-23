@@ -4,6 +4,8 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 
+import pandas as pd
+
 REMOTE_USER = "fo18103"
 REMOTE_HOST = "IT107338.users.bris.ac.uk"
 REMOTE_DIR = "/mnt/storage/cctvnet"
@@ -54,18 +56,25 @@ def main(input_dir: Path, start_time_str: str, end_time_str: str):
 
     total_files = len(filtered_files)
     print(f"Starting transfer of {total_files} video(s)...")
+    df = pd.DataFrame([x.parent.parent.stem for x in filtered_files])
+    print(df[0].unique())
+    for i, file in enumerate(filtered_files):
+        file.unlink()
+        print(file)
+        print(f"{i}/{total_files}")
 
-    with ThreadPoolExecutor(max_workers=25) as executor:
-        futures = [
-            executor.submit(rsync_file_to_remote, file, input_dir, i + 1, total_files)
-            for i, file in enumerate(filtered_files)
-        ]
-        for _ in as_completed(futures):
-            pass  # wait for all to finish
+
+    # with ThreadPoolExecutor(max_workers=25) as executor:
+    #     futures = [
+    #         executor.submit(rsync_file_to_remote, file, input_dir, i + 1, total_files)
+    #         for i, file in enumerate(filtered_files)
+    #     ]
+    #     for _ in as_completed(futures):
+    #         pass  # wait for all to finish
 
 if __name__ == "__main__":
     main(
         Path("/mnt/storage/cctvnet"),
         "20250101T000000",
-        "20250416T000000"
+        "20250413T000000"
     )

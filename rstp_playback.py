@@ -52,6 +52,7 @@ def generate_perfect_5min_ranges_(start: str, end: str) -> list:
 
     step = timedelta(minutes=5)
     ranges = []
+    ranges_offset = []
     ranges_datetime = []
     current_dt = aligned_start_dt
 
@@ -63,11 +64,15 @@ def generate_perfect_5min_ranges_(start: str, end: str) -> list:
         # Discard intervals between 00:00 and 04:00
         if not (0 <= current_dt.hour < 4):
             ranges.append([current_dt.strftime('%Y%m%dT%H%M%S'), next_dt.strftime('%Y%m%dT%H%M%S')])
+            ranges_offset.append([(current_dt - timedelta(seconds=10)).strftime('%Y%m%dT%H%M%S'), next_dt.strftime('%Y%m%dT%H%M%S')])
             ranges_datetime.append([current_dt, next_dt])
 
         current_dt = next_dt  # Move to the next 5-minute interval
 
-    return ranges, ranges_datetime
+    # ranges = ranges[1:]
+    # ranges_datetime = ranges_datetime[1:]
+
+    return ranges, ranges_offset, ranges_datetime
 
 def generate_perfect_5min_ranges(start: str, end: str) -> list:
     """Generate 5-minute aligned recording ranges from start to end timestamps."""
@@ -310,11 +315,11 @@ def main(ip, is_fisheye, port=0):
     now = datetime.now()
     earliest_recording = (now - timedelta(days=4, hours=now.hour, minutes=now.minute, seconds=now.second)).strftime('%Y-%m-%dT%H:%M:%SZ')
     latest_recording = now.strftime('%Y-%m-%dT%H:%M:%SZ')
-    clips, _ = generate_perfect_5min_ranges_(earliest_recording, latest_recording)
+    clips, clips_offset, _ = generate_perfect_5min_ranges_(earliest_recording, latest_recording)
     print(f"Found {len(clips)} recordings. First clip: [{clips[0]}] Last clip: [{clips[-1]}]")
-    if ip in ["10.70.66.31", "10.70.66.30", "10.70.66.29", "10.70.66.28"]:
-        print(f"Motion detection enabled. {ip}.")
-        clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
+    # if ip in ["10.70.66.31", "10.70.66.30", "10.70.66.29", "10.70.66.28"]:
+    #     print(f"Motion detection enabled. {ip}.")
+    #     clips, _ = generate_perfect_5min_ranges(earliest_recording, latest_recording)
 
     # clock = f"{clips[0][0]}-{clips[0][1]}"
     # filename = f"{clock}.mp4".replace("-", '_')
@@ -325,9 +330,10 @@ def main(ip, is_fisheye, port=0):
     i = 0
     while i < len(clips):
         clock = f"{clips[i][0]}-{clips[i][1]}"
+        clock_offset = f"{clips_offset[i][0]}-{clips_offset[i][1]}"
         i += 1
         #clock = "20250328T175400-20250328T175500"
-        rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock.replace('T','')}/OverlappedID=0/backup.smp"
+        rtsp_url = f"rtsp://{USERNAME}:{PASSWORD}@localhost:{port}/recording/{clock_offset.replace('T','')}/OverlappedID=0/backup.smp"
         #recording/20250305000000-20250305000500/OverlappedID=0/backup.smp
         filename = f"{clock}.mp4".replace("-", '_')
         out_dir = create_output_directory(filename, ip)

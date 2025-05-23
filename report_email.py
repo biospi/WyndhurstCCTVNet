@@ -76,7 +76,7 @@ def report_status():
     farm_map.main()
     map_files = list(Path("/mnt/storage/thumbnails/map").rglob("*.png"))
     map_files.sort()
-    send_email("Daily Storage Report", email_body, attachment_path=[heatmap_storage_files[-1], map_files[-1], folder_path / "0_storage_total.png"])
+    send_email("Daily Storage Report", email_body, attachment_path=[heatmap_storage_files[-1], map_files[-1]])
 
 # Schedule the script to run daily at 1 PM
 schedule.every().day.at("08:00").do(report_status)
