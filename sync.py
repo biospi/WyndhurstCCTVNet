@@ -69,10 +69,10 @@ def main(input_dir, output_dir):
     images = []
     ips = []
     for video_file in mp4_files:
-        date = "20250515"
+        date = "20250521"
         time_s = "140000"
         time_e = "140500"
-        if f'2025May15/videos/{date}T{time_s}_{date}T{time_e}.mp4' not in video_file.as_posix():
+        if f'2025May21/videos/{date}T{time_s}_{date}T{time_e}.mp4' not in video_file.as_posix():
             continue
         ip = video_file.parent.parent.parent.name.split('.')[-1]
         print(f"Reading video: {video_file.name}")
