@@ -96,7 +96,7 @@ def extract_timestamp(path):
         return None
 
 
-def get_first_file_after(folder_path, days_offset=5, target_hour=13):
+def get_first_file_after(folder_path, days_offset=5, target_hour=4):
     """Returns the first .mp4 file per IP after a future datetime."""
     mp4_files = list(folder_path.rglob("*.mp4"))
     df = pd.DataFrame(mp4_files, columns=["path"])

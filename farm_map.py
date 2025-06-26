@@ -56,7 +56,7 @@ def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
         print(f"Error extracting thumbnail for {video_path}: {e}")
 
 
-def build_map():
+def build_map(raw=False, diagram=False):
     image_dir = Path('/mnt/storage/thumbnails/hd')
     fig, ax = plt.subplots(figsize=(60, 5))
     ax.set_xlim(0, 36)
@@ -103,25 +103,38 @@ def build_map():
         colors = [tab10(i) for i in range(tab10.N)]
 
         color = colors[c_id]
-        if rot == 1:
-            img = np.rot90(img)
-        if rot == -1:
-            img = np.fliplr(img)
-            img = np.flipud(img)
+        if not raw:
+            if rot == 1:
+                img = np.rot90(img)
+                if diagram:
+                    img_path = image_dir / "rot90.png"
+                    img = mpimg.imread(img_path)
 
-        if rot == -2:
-            img = np.fliplr(img)
-            img = np.fliplr(img)
+            if rot == -1 or rot == -2:
+                img = np.fliplr(img)
+                img = np.flipud(img)
+                if diagram:
+                    img_path = image_dir / "flipud_lr.png"
+                    img = mpimg.imread(img_path)
 
-        if rot == -3:
-            #img = np.fliplr(img)
-            img = np.flipud(img)
+            if rot == -3:
+                #img = np.fliplr(img)
+                img = np.flipud(img)
+                if diagram:
+                    img_path = image_dir / "flipud.png"
+                    img = mpimg.imread(img_path)
 
-        if rot == -4:
-            img = np.fliplr(img)
+            if rot == -4:
+                img = np.fliplr(img)
+                if diagram:
+                    img_path = image_dir / "fliplr.png"
+                    img = mpimg.imread(img_path)
 
-        if rot == -5:
-            img = np.rot90(img, k=2)
+            if rot == -5:
+                img = np.rot90(img, k=2)
+                if diagram:
+                    img_path = image_dir / "rot180.png"
+                    img = mpimg.imread(img_path)
 
         if row is not None and col is not None:
             # Get the aspect ratio of the image

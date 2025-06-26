@@ -15,13 +15,16 @@ import yagmail
 import farm_map
 import storage_info
 from utils import get_latest_file
+import configparser
+config = configparser.ConfigParser()
+config.read("config.cfg")
 
 # Email Configuration
 SMTP_SERVER = "smtp.gmail.com"  # Replace with your SMTP server
 SMTP_PORT = 587
-EMAIL_SENDER = "axelmontout@gmail.com"
-EMAIL_PASSWORD = "fcij exfy cxyt wrud "
-EMAIL_RECEIVER = ["fo18103@bristol.ac.uk", "mr16115@bristol.ac.uk"]
+EMAIL_RECEIVER = [config["EMAIL"]["receiver_0"], config["EMAIL"]["receiver_1"]]
+EMAIL_SENDER = config["EMAIL"]["sender"]
+EMAIL_PASSWORD = config["EMAIL"]["password"]
 
 # Folder Path
 FOLDER_PATH = Path("/mnt/storage/cctvnet")
@@ -76,7 +79,7 @@ def report_status():
     farm_map.main()
     map_files = list(Path("/mnt/storage/thumbnails/map").rglob("*.png"))
     map_files.sort()
-    send_email("Daily Storage Report", email_body, attachment_path=[heatmap_storage_files[-1], map_files[-1]])
+    send_email("Daily Storage Report", email_body, attachment_path=[heatmap_storage_files[-1], map_files[-1], folder_path / "0_storage_total.png"])
 
 # Schedule the script to run daily at 1 PM
 schedule.every().day.at("08:00").do(report_status)
