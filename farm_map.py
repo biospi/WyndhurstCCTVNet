@@ -110,7 +110,7 @@ def build_map(raw=False, diagram=False):
                     img_path = image_dir / "rot90.png"
                     img = mpimg.imread(img_path)
 
-            if rot == -1 or rot == -2:
+            if rot == -1:
                 img = np.fliplr(img)
                 img = np.flipud(img)
                 if diagram:

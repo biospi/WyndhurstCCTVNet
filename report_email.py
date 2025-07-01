@@ -73,7 +73,7 @@ def report_status():
 
     email_body = f"{disk_space}\n\n{latest_file}"
     storage_info.main()
-    folder_path = Path("/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/storage")
+    folder_path = Path("//storage")
     heatmap_storage_files = list(folder_path.rglob("*.png"))
     heatmap_storage_files.sort()
     farm_map.main()

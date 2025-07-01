@@ -48,15 +48,23 @@ def download_file(sftp, remote_file):
     sftp.get(remote_file, str(local_file))
     return local_file
 
-def parse_and_check(local_file):
+def parse_and_check(local_file, exlude=["10.70.66.28", "10.70.66.29", "10.70.66.30", "10.70.66.31"]):
     """Checks JSON content and logs if any camera is not recording."""
     try:
         with open(local_file, 'r') as f:
             data = json.load(f)
         timestamp = data.get("timestamp", "N/A")
+        if not timestamp:
+            print("[WARNING] No timestamp in data.")
+            return
+        timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H-%M-%S")
+        if 0 <= timestamp.hour < 5:
+            print(f"Skipping check: timestamp {timestamp} is between 00:00 and 05:00")
+            return
+
         camera_status = data.get("camera_status", {})
 
-        non_recording = [ip for ip, status in camera_status.items() if not status]
+        non_recording = [ip for ip, status in camera_status.items() if not status and ip not in exlude]
 
         if non_recording:
             print(f"\nIssue Detected at {timestamp}:")
@@ -118,4 +126,4 @@ if __name__ == "__main__":
     while True:
         main()
         print("sleeping...")
-        time.sleep(1800)
+        time.sleep(3600)

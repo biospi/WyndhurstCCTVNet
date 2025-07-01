@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-SOURCE_PATH = "/home/fo18103/PycharmProjects/WhyndhurstVideoTransfer/"
+SOURCE_PATH = "//"
 
 
 MAP = {
@@ -14,7 +14,7 @@ MAP = {
     9: {"brand": "hikvision", "ip": 9, "location": "Milking", "position": (0, 27, 1, 1, 1, 0.5, 1.8, 0)},
     4: {"brand": "hikvision*", "ip": 4, "location": "Milking", "position": (0, 26, 1, 1, 1, 0.5, 1.8, 0)},
 
-    137: {"brand": "hikvision*", "ip": 137, "location": "Race Foot Bath", "position": (5, 32, 2, 1, 1, 2.5, 1.8, 1)},
+    137: {"brand": "hikvision*", "ip": 137, "location": "Race Foot Bath", "position": (5, 32, 2, 1, -10, 2.5, 1.8, 1)},
     28: {"brand": "hanwa*", "ip": 28, "location": "Race Foot Bath", "position": (5, 30, 2, 0, -5, 1, 1.2, 1)},
     29: {"brand": "hanwa*", "ip": 29, "location": "Race Foot Bath", "position": (5, 28, 2, 0, -5, 1, 1.2, 1)},
     30: {"brand": "hanwa*", "ip": 30, "location": "Race Foot Bath", "position": (5, 26, 2, 0, -5, 1, 1.2, 1)},
@@ -71,13 +71,13 @@ MAP = {
     136: {"brand": "hikvision", "ip": 136, "location": "Back Barn Feed Face 2", "position": (7, 4, 3, 1, -1, 1, 1.7, 7)},
     126: {"brand": "hikvision", "ip": 126, "location": "Back Barn Feed Face 2", "position": (7, 1, 3, 1, -1, 1, 1.7, 7)},
 
-    128: {"brand": "hikvision*", "ip": 128, "location": "Back Barn Feed Face 1", "position": (9, 19, 3, 1, -2, 1.5, 1.7, 8)},
-    133: {"brand": "hikvision*", "ip": 133, "location": "Back Barn Feed Face 1", "position": (9, 16, 3, 1, -2, 1.5, 1.7, 8)},
-    1: {"brand": "hikvision*", "ip": 1, "location": "Back Barn Feed Face 1", "position": (9, 13, 3, 1, -2, 1.5, 1.7, 8)},
-    3: {"brand": "hikvision*", "ip": 3, "location": "Back Barn Feed Face 1", "position": (9, 10, 3, 1, -2, 1.5, 1.7, 8)},
-    33: {"brand": "hikvision*", "ip": 33, "location": "Back Barn Feed Face 1", "position": (9, 7, 3, 1, -2, 1.5, 1.7, 8)},
-    130: {"brand": "hikvision*", "ip": 130, "location": "Back Barn Feed Face 1", "position": (9, 4, 3, 1, -2, 1.5, 1.7, 8)},
-    139: {"brand": "hikvision*", "ip": 139, "location": "Back Barn Feed Face 1", "position": (9, 1, 3, 1, -2, 1.5, 1.7, 8)}
+    128: {"brand": "hikvision*", "ip": 128, "location": "Back Barn Feed Face 1", "position": (9, 19, 3, 1, -10, 1.5, 1.7, 8)},
+    133: {"brand": "hikvision*", "ip": 133, "location": "Back Barn Feed Face 1", "position": (9, 16, 3, 1, -10, 1.5, 1.7, 8)},
+    1: {"brand": "hikvision*", "ip": 1, "location": "Back Barn Feed Face 1", "position": (9, 13, 3, 1, -10, 1.5, 1.7, 8)},
+    3: {"brand": "hikvision*", "ip": 3, "location": "Back Barn Feed Face 1", "position": (9, 10, 3, 1, -10, 1.5, 1.7, 8)},
+    33: {"brand": "hikvision*", "ip": 33, "location": "Back Barn Feed Face 1", "position": (9, 7, 3, 1, -10, 1.5, 1.7, 8)},
+    130: {"brand": "hikvision*", "ip": 130, "location": "Back Barn Feed Face 1", "position": (9, 4, 3, 1, -10, 1.5, 1.7, 8)},
+    139: {"brand": "hikvision*", "ip": 139, "location": "Back Barn Feed Face 1", "position": (9, 1, 3, 1, -10, 1.5, 1.7, 8)}
 }
 
 
