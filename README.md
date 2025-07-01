@@ -12,6 +12,7 @@ Existing configured Workstation. Follow the guide to install a new workstation.
 ## How To Install
  
 1) Clone the repository.
+
 ```bash
 git clone https://github.com/biospi/xxx.git
 ```
