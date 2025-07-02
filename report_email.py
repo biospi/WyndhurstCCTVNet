@@ -73,7 +73,7 @@ def report_status():
 
     email_body = f"{disk_space}\n\n{latest_file}"
     storage_info.main()
-    folder_path = Path("//storage")
+    folder_path = Path(__file__).parent / "storage"
     heatmap_storage_files = list(folder_path.rglob("*.png"))
     heatmap_storage_files.sort()
     farm_map.main()
