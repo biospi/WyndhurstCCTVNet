@@ -40,7 +40,7 @@ the file should be edited and formatted as below:
 ```bash
 [SSH]
 farm_server_user = username
-farm_server_password =
+farm_server_password = password
 [EMAIL]
 receiver_0 = email
 receiver_1 = email
