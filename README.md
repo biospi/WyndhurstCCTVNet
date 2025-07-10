@@ -14,7 +14,7 @@ Existing configured Workstation. Follow the guide to install a new workstation.
 1) Clone the repository.
 
 ```bash
-git clone https://github.com/biospi/xxx.git
+git clone https://github.com/biospi/WyndhurstCCTVNet.git
 ```
 2) Change directory
 ```bash
@@ -35,6 +35,23 @@ make environment
 ```
 
 ## How to use
+A config file named 'config.cfg' containing the credentials is required and need to be placed in the source directory root, 
+the file should be edited and formatted as below:
+```bash
+[SSH]
+farm_server_user = username
+farm_server_password =
+[EMAIL]
+receiver_0 = email
+receiver_1 = email
+sender = email
+password = password
+[AUTH]
+password_hikvision = password
+password_hanwha = password
+login = user
+
+```
 To start the video recording across the farm, and start error and storage reporting:
 ```bash
 python start_recording.py
