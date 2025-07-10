@@ -58,7 +58,7 @@ def parse_and_check(local_file, exlude=["10.70.66.28", "10.70.66.29", "10.70.66.
             print("[WARNING] No timestamp in data.")
             return
         timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H-%M-%S")
-        if 0 <= timestamp.hour < 5:
+        if 0 <= timestamp.hour <= 6:
             print(f"Skipping check: timestamp {timestamp} is between 00:00 and 05:00")
             return
 

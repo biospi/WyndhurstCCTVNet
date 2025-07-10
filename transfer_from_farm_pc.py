@@ -2,7 +2,7 @@ import paramiko
 import os
 import time
 from pathlib import Path
-import configparser
+
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -11,6 +11,7 @@ from storage_info import get_video_duration
 from utils import is_float
 
 # Load configuration
+import configparser
 config = configparser.ConfigParser()
 config.read("config.cfg")
 

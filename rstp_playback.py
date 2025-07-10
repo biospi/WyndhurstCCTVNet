@@ -10,13 +10,16 @@ from pathlib import Path
 
 from storage_info import parse_datetime
 from utils import run_cmd, SOURCE_PATH
+import configparser
+config = configparser.ConfigParser()
+config.read("config.cfg")
 
 MAX_ONVIF_RETRY = 5
 MAX_DOWNLOAD_RETRIES = 1
 EXPECTED_DURATION_LANDSCAPE = 298
 EXPECTED_DURATION_FISH = 298
 USERNAME = "admin"
-PASSWORD = "Ocs881212"
+PASSWORD = config['AUTH']['password_hanwha']
 
 HEADERS = {"Content-Type": "text/xml; charset=utf-8"}
 AUTH = HTTPDigestAuth(USERNAME, PASSWORD)

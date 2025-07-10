@@ -5,11 +5,11 @@ from utils import SOURCE_PATH
 
 
 def main():
-    ssh_tunnel_script = f"{SOURCE_PATH}open_ssh_tunnel.sh"
+    ssh_tunnel_script = (SOURCE_PATH / f"open_ssh_tunnel.sh").as_posix()
     print("Starting SSH tunnels...")
     print(ssh_tunnel_script)
     subprocess.run(ssh_tunnel_script, shell=True, check=True)
-    subprocess.run(f"{SOURCE_PATH}open_ssh_tunnel_hikvision.sh", shell=True, check=True)
+    subprocess.run((SOURCE_PATH / f"open_ssh_tunnel_hikvision.sh").as_posix(), shell=True, check=True)
 
     # print("Starting report_email.py in background...")
     # subprocess.Popen(["python3", f"{source_path}report_email.py"])
@@ -20,7 +20,7 @@ def main():
     # time.sleep(2)
 
     print("Starting hanwha_rtsp_multi.py...")
-    subprocess.run(["python3", f"{SOURCE_PATH}hanwha_rtsp_multi.py"])
+    subprocess.run(["python3", (SOURCE_PATH / f"hanwha_rtsp_multi.py").as_posix()])
 
 if __name__ == '__main__':
     main()

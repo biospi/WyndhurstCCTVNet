@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import smtplib
 import re
@@ -29,13 +30,34 @@ EMAIL_PASSWORD = config["EMAIL"]["password"]
 # Folder Path
 FOLDER_PATH = Path("/mnt/storage/cctvnet")
 
-def get_disk_space():
-    """Returns detailed disk space info using 'df -h'."""
-    try:
-        result = subprocess.run(["df", "-h"], capture_output=True, text=True, check=True)
-        return f"Disk Space Report:\n{result.stdout}"
-    except subprocess.CalledProcessError as e:
-        return f"Error retrieving disk space info: {e}"
+# def get_disk_space():
+#     """Returns detailed disk space info using 'df -h'."""
+#     try:
+#         result = subprocess.run(["df", "-h"], capture_output=True, text=True, check=True)
+#         return f"Disk Space Report:\n{result.stdout}"
+#     except subprocess.CalledProcessError as e:
+#         return f"Error retrieving disk space info: {e}"
+
+def get_disk_space(path="/mnt/storage"):
+    stat = os.statvfs(path)
+
+    block_size = stat.f_frsize  # fragment size
+    total_blocks = stat.f_blocks
+    available_blocks = stat.f_bavail  # available to unprivileged users
+    free_blocks = stat.f_bfree  # total free blocks (incl. root)
+
+    total = total_blocks * block_size
+    available = available_blocks * block_size
+    used = total - (free_blocks * block_size)
+
+    usage_percent = (used / (used + available)) * 100
+
+    return (
+        f"Disk Usage (df-style) for {path}:\n"
+        f"Total: {total // 2 ** 30} GiB\n"
+        f"Used: {used // 2 ** 30} GiB ({usage_percent:.1f}%)\n"
+        f"Available: {available // 2 ** 30} GiB\n"
+    )
 
 
 def send_email(subject, body, attachment_path=None):
@@ -70,7 +92,6 @@ def report_status():
     latest_file = get_latest_file(FOLDER_PATH)
     latest_file = "".join(latest_file)
     print(f"Latest file: {latest_file}")
-
     email_body = f"{disk_space}\n\n{latest_file}"
     storage_info.main()
     folder_path = Path(__file__).parent / "storage"

@@ -3,8 +3,9 @@ import subprocess
 from datetime import datetime, timedelta
 
 import pandas as pd
+from pathlib import Path
 
-SOURCE_PATH = "//"
+SOURCE_PATH = Path(__file__).parent
 
 
 MAP = {
@@ -96,7 +97,7 @@ def extract_timestamp(path):
         return None
 
 
-def get_first_file_after(folder_path, days_offset=5, target_hour=4):
+def get_first_file_after(folder_path, days_offset=10, target_hour=9):
     """Returns the first .mp4 file per IP after a future datetime."""
     mp4_files = list(folder_path.rglob("*.mp4"))
     df = pd.DataFrame(mp4_files, columns=["path"])
@@ -208,12 +209,10 @@ def format_dst(folder, video, ip_address):
     path = out_dir / video
     return path
 
-#rstp://admin:Ocs881212@10.70.66.28/profile1/media.smp
 #rtsp://10.70.66.24:1024/multicast/profile1/media.smp
 #rtsp://239.1.1.1:1024/multicast/profile1/media.smp
 #rtsp://239.1.1.1:1024/1/multicast/profile1/media.smp
 #rtsp://10.70.66.24:554/profile1/media.smp
-#rtsp://admin:Ocs881212@10.70.66.24:554/profile2/media.smp
 
 if __name__ == "__main__":
     # Mapping of rotation codes to human-readable transformations

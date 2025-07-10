@@ -11,6 +11,9 @@ from utils import MAP, get_latest_file, get_first_file_after
 import numpy as np
 import cv2
 import matplotlib.patches as patches
+import configparser
+config = configparser.ConfigParser()
+config.read("config.cfg")
 
 
 def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
@@ -30,6 +33,7 @@ def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
 
     hd_command = [
         "ffmpeg",
+        "-y",
         "-i", video_path,  # Input video
         "-ss", "00:00:05",  # Seek to 5 seconds
         "-vframes", "1",  # Extract only 1 frame
@@ -39,6 +43,7 @@ def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
 
     sd_command = [
         "ffmpeg",
+        "-y",
         "-i", video_path,  # Input video
         "-ss", "00:00:05",  # Seek to 5 seconds
         "-vframes", "1",  # Extract only 1 frame
@@ -234,7 +239,8 @@ def update_thumbnails_from_storage():
     hd_folder = base_folder / 'hd'
     sd_folder = base_folder / 'sd'
 
-    data = get_first_file_after(Path("/mnt/storage/cctvnet/"))
+    #data = get_first_file_after(Path("/mnt/storage/cctvnet/"))
+    data = get_latest_file(Path("/mnt/storage/cctvnet/"))
 
     paths = [d.split('last:')[1].strip() for d in data]  # Extract paths properly
     print("Processing videos:", paths)
@@ -250,7 +256,7 @@ def update_thumbnails_from_rstp():
 
     for idx, camera_ip in enumerate(camera_ips):
         ip, fisheye, port = camera_ip.split()
-        rtsp_url = f"rtsp://admin:ocs881212@localhost:{port}/Streaming/channels/101"
+        rtsp_url = f"rtsp://admin:{config['AUTH']['password_hikvision']}@localhost:{port}/Streaming/channels/101"
         print(f"Downloading {rtsp_url}")
         filename = f"{ip.split('.')[-1]}.jpg"
         out_dir = Path('/mnt/storage/thumbnails/hd/')
@@ -279,7 +285,7 @@ def update_thumbnails_from_rstp():
         camera_ips = [line.strip() for line in file if line.strip()]
     for idx, camera_ip in enumerate(camera_ips):
         ip, fisheye, port = camera_ip.split()
-        rtsp_url = f"rtsp://admin:Ocs881212@localhost:{port}/profile2/media.smp"
+        rtsp_url = f"rtsp://admin:{config['AUTH']['password_hanwha']}@localhost:{port}/profile2/media.smp"
         print(f"Downloading {rtsp_url}")
         filename = f"{ip.split('.')[-1]}.jpg"
         out_dir = Path('/mnt/storage/thumbnails/hd/')

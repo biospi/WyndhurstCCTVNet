@@ -4,6 +4,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import subprocess
 import socket
+import configparser
+config = configparser.ConfigParser()
+config.read("config.cfg")
 
 CAMERA_LIST_FILE = Path("hanwha_ip_study.txt")
 BASE_OUTPUT_DIR = Path("/mnt/storage/cctvnet/")
@@ -89,7 +92,7 @@ def record_camera(rtsp_url, local_port):
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
             "-rtsp_transport", "tcp",  # Use TCP for RTSP
-            "-i", f"rtsp://admin:Ocs881212@localhost:{local_port}/profile2/media.smp",  # Local tunneled RTSP stream
+            "-i", f"rtsp://admin:{config['AUTH']['password_hanwha']}@localhost:{local_port}/profile2/media.smp",  # Local tunneled RTSP stream
             "-t", str(CHUNK_DURATION),  # Duration of the video chunk
             "-c:v", "libx264",  # Re-encode video using H.264
             "-preset", "fast",  # Speed-quality tradeoff
@@ -130,7 +133,7 @@ def main():
             #     continue  # Skip this camera if tunnel doesn't establish
 
             # Start recording
-            rtsp_url = f"rtsp://admin:Ocs881212@{camera_ip}:554/profile2/media.smp"
+            rtsp_url = f"rtsp://admin:{config['AUTH']['password_hanwha']}@{camera_ip}:554/profile2/media.smp"
             executor.submit(record_camera, rtsp_url, local_port)
 
     # Cleanup on exit
@@ -145,7 +148,6 @@ if __name__ == "__main__":
         print("Recording stopped.")
 
 #"#fo18103@it106570:~$ ssh -L 5554:10.70.66.16:554 fo18103@10.70.66.2
-#ffplay rtsp://admin:Ocs881212@localhost:5554/profile2/media.smp -rtsp_transport tcp
 
 #ssh -i ~/.ssh/id_rsa_hanwha fo18103@10.70.66.2
 #ssh-keygen -t rsa -b 4096 -C "fo18103@it106570"
