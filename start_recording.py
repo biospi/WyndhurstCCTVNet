@@ -11,13 +11,13 @@ def main():
     subprocess.run(ssh_tunnel_script, shell=True, check=True)
     subprocess.run((SOURCE_PATH / f"open_ssh_tunnel_hikvision.sh").as_posix(), shell=True, check=True)
 
-    # print("Starting report_email.py in background...")
-    # subprocess.Popen(["python3", f"{source_path}report_email.py"])
-    # time.sleep(2)
-    #
-    # print("Starting transfer_from_farm_pc.py in background...")
-    # subprocess.Popen(["python3", f"{source_path}transfer_from_farm_pc.py"])
-    # time.sleep(2)
+    print("Starting report_email.py in background...")
+    subprocess.Popen(["python3", (SOURCE_PATH / f"report_email.py").as_posix()])
+    time.sleep(2)
+
+    print("Starting transfer_from_farm_pc.py in background...")
+    subprocess.Popen(["python3", (SOURCE_PATH / f"transfer_from_farm_pc.py").as_posix()])
+    time.sleep(2)
 
     print("Starting hanwha_rtsp_multi.py...")
     subprocess.run(["python3", (SOURCE_PATH / f"hanwha_rtsp_multi.py").as_posix()])

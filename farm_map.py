@@ -61,8 +61,7 @@ def extract_thumbnail(ip, video_path, hd_folder, sd_folder):
         print(f"Error extracting thumbnail for {video_path}: {e}")
 
 
-def build_map(raw=False, diagram=False):
-    image_dir = Path('/mnt/storage/thumbnails/hd')
+def build_map(raw=False, diagram=False, image_dir = Path('/mnt/storage/thumbnails/hd'), map_dir = Path('/mnt/storage/thumbnails/map'), tag=None):
     fig, ax = plt.subplots(figsize=(60, 5))
     ax.set_xlim(0, 36)
     ax.set_ylim(0, 15)
@@ -97,9 +96,47 @@ def build_map(raw=False, diagram=False):
         row, col, w, h , rot, offset_c, offset_r, c_id= item[1]["position"]
         img_extent = [col, col + w, row, row + h]
         img_path = image_dir / f"{ip}.jpg"
+        mask_path = image_dir.parent / "masks"/ f"{ip}_mask.png"
+
+        # try:
+        #     img = mpimg.imread(img_path)
+        #     if mask.exists():
+        #         img_mask = mpimg.imread(mask)
+        #         #todo overlay binary mask on top of img with 20% opacity
+        #
+        # except Exception as e:
+        #     print(f"Error reading {img_path}: {e}")
+        #     img = mpimg.imread("gray.jpg")
 
         try:
             img = mpimg.imread(img_path)
+
+            if mask_path.exists():
+                img_mask = mpimg.imread(mask_path)
+
+                if img_mask.ndim == 3:
+                    img_mask = img_mask[:, :, 0]
+
+                # Resize to match the image
+                img_mask = cv2.resize(img_mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+                # Normalize mask
+                mask_norm = img_mask / 255.0 if img_mask.max() > 1 else img_mask
+
+                # Ensure image is float32 in [0, 1]
+                img = img.astype(np.float32) / 255.0 if img.dtype == np.uint8 else img.astype(np.float32)
+
+                # Red overlay
+                alpha = 0.4
+                overlay = np.zeros_like(img, dtype=np.float32)
+                overlay[..., 0] = 1.0  # Red channel to 1
+
+                # Blend where mask is 1
+                mask_area = mask_norm > 0.5
+                img[mask_area] = (1 - alpha) * img[mask_area] + alpha * overlay[mask_area]
+
+                img = np.clip(img, 0, 1)
+
         except Exception as e:
             print(f"Error reading {img_path}: {e}")
             img = mpimg.imread("gray.jpg")
@@ -210,9 +247,9 @@ def build_map(raw=False, diagram=False):
                 ha='center', va='bottom', fontsize=10, color='m', weight='bold')
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    map_dir = Path('/mnt/storage/thumbnails/map')
+
     map_dir.mkdir(parents=True, exist_ok=True)
-    output_file = map_dir / f"map_{timestamp}.png"
+    output_file = map_dir / f"map_{tag}_{timestamp}.png"
     #plt.savefig(output_file, bbox_inches='tight', pad_inches=0)
     #plt.title(f"Wyndhurst Farm {datetime.now().strftime('%d/%m/%Y')}\n Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha} ", fontsize=14, fontweight='bold', pad=0, color='black')
     fig.suptitle(f"Wyndhurst Farm {datetime.now().strftime('%d/%m/%Y %H:%M')}| Hikvision: {cpt_hikvision}, Hanwha: {cpt_hanwha}, Total {cpt_hikvision + cpt_hanwha} ",

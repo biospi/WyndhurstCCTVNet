@@ -35,8 +35,10 @@ def rsync_file_to_remote(file: Path, base_dir: Path, index: int, total: int):
     try:
         relative_path = file.relative_to(base_dir)
         remote_path = f"{REMOTE_USER}@{REMOTE_HOST}:{REMOTE_DIR}/"
+        cmd = ["rsync", "-azRv", "--partial", "--progress", "--size-only", f"./{relative_path}", remote_path]
+        print(' '.join(cmd))
         result = subprocess.run(
-            ["rsync", "-azRv", "--partial", "--progress", "--size-only", f"./{relative_path}", remote_path],
+            cmd,
             cwd=base_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -57,7 +59,7 @@ def rsync_file_to_remote(file: Path, base_dir: Path, index: int, total: int):
             print(f"[{index}/{total}] PATH ERROR: {file}")
 
 
-def main(input_dir: Path, start_time_str: str, end_time_str: str):
+def main(input_dir: Path, start_time_str: str, end_time_str: str, delete=False):
     start_time = datetime.strptime(start_time_str, "%Y%m%dT%H%M%S")
     end_time = datetime.strptime(end_time_str, "%Y%m%dT%H%M%S")
 
@@ -74,28 +76,31 @@ def main(input_dir: Path, start_time_str: str, end_time_str: str):
     df = pd.DataFrame([(x.parent.parent.stem, x) for x in filtered_files])
     print(df[0].unique())
 
-    # with ThreadPoolExecutor(max_workers=8) as executor:
-    #     futures = [
-    #         executor.submit(rsync_file_to_remote, file, input_dir, i + 1, total_files)
-    #         for i, file in enumerate(filtered_files)
-    #     ]
-    #     for _ in as_completed(futures):
-    #         pass  # wait for all to finish
-
-    for i, file in enumerate(filtered_files):
-        file.unlink()
-        print(file)
-        print(f"{i}/{total_files}")
+    if delete:
+        for i, file in enumerate(filtered_files):
+            file.unlink()
+            print(file)
+            print(f"{i}/{total_files}")
+    else:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = [
+                executor.submit(rsync_file_to_remote, file, input_dir, i + 1, total_files)
+                for i, file in enumerate(filtered_files)
+            ]
+            for _ in as_completed(futures):
+                pass  # wait for all to finish
 
 
 if __name__ == "__main__":
-    # main(
-    #     Path("/mnt/storage/cctvnet"),
-    #     "20250101T000000",
-    #     "20250504T000000"
-    # )
     main(
         Path("/mnt/storage/cctvnet"),
-        "20250430T000000",
-        "20250525T000000"
+        "20250101T000000",
+        "20250618T000000",
+        delete=True
     )
+    # main(
+    #     Path("/mnt/storage/cctvnet"),
+    #     "20250430T000000",
+    #     "20250620T000000",
+    #     delete=False
+    # )

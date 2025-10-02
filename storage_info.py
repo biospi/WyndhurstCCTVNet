@@ -8,10 +8,13 @@ import subprocess
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.patches import Patch
+import calplot
+import numpy as np
 
 
 matplotlib.use("Agg")  # Use a non-interactive backend
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from utils import is_float, MAP
 
@@ -32,6 +35,97 @@ with open("hikvision.txt") as f:
 
 with open("hanwha.txt") as f:
     HANWHA = [int(line.split()[0].rsplit('.', 1)[-1]) for line in f]
+
+
+LOCAL_DIRS = [
+    Path("/mnt/usb_storage/cctvnet"),
+    Path("/mnt/storage/cctvnet"),
+]
+
+REMOTE_USER = "fo18103"
+REMOTE_HOST = "IT107338.users.bris.ac.uk"
+
+
+def parse_datetime(date_str):
+    for fmt in ("%Y%m%dT%H%M%S", "%Y%m%d%H%M%S"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    return None
+
+def list_local_mp4s(base_dir: Path):
+    return list(base_dir.rglob("*.mp4"))
+
+def list_remote_mp4s():
+    """Get list of remote .mp4 files with size via ssh/rsync dry-run."""
+    remote_dirs = " ".join(str(d) for d in LOCAL_DIRS)
+    cmd = [
+        "ssh", f"{REMOTE_USER}@{REMOTE_HOST}",
+        f"find {remote_dirs} -type f -name '*.mp4' -printf '%p|%s\\n'"
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        lines = result.stdout.strip().splitlines()
+        files = []
+        for line in lines:
+            path_str, size_str = line.split("|")
+            files.append((path_str, int(size_str)))
+        return files
+    except subprocess.CalledProcessError as e:
+        print("Failed to list remote files")
+        print(e.stderr)
+        return []
+
+def build_dataframe(local_files, remote_files):
+    rows = []
+
+    # Local files
+    for f in local_files:
+        try:
+            size = f.stat().st_size  / (1024 ** 3)
+        except Exception as e:
+            print(e)
+            continue
+        name = f.stem
+        parts = name.split("_")
+        if len(parts) < 2:
+            continue
+        s_time = parts[0]
+        e_time = parts[1]
+        if not (s_time and e_time):
+            continue
+        ip = f.parent.parent.parent.name if "videos" in str(f) else f.parent.parent.name
+        rows.append({
+            "source": "local",
+            "ip": ip,
+            "FilePath": str(f),
+            "FileSizeGB": size,
+            "s_dates": s_time,
+            "f_dates": e_time
+        })
+
+    # Remote files
+    for path_str, size in remote_files:
+        name = Path(path_str).stem
+        parts = name.split("_")
+        if len(parts) < 2:
+            continue
+        s_time = parts[0]
+        e_time = parts[1]
+        if not (s_time and e_time):
+            continue
+        ip = Path(path_str).parent.parent.parent.name
+        rows.append({
+            "source": "remote",
+            "ip": ip,
+            "FilePath": path_str,
+            "FileSizeGB": size / (1024 ** 3),
+            "s_dates": s_time,
+            "f_dates": e_time,
+        })
+
+    return pd.DataFrame(rows)
 
 
 def get_video_duration(file_path):
@@ -184,22 +278,43 @@ def get_ffmpeg_durations(videos):
 #     plt.savefig(total_filepath, bbox_inches='tight', dpi=600)
 
 
-def main():
-    mp4_files = list(Path("/mnt/storage/cctvnet/").rglob("*.mp4"))
-    print(f"Found {len(mp4_files)} files.")
-    df = pd.DataFrame(mp4_files, columns=['FilePath'])
-    df['FileSizeBytes'] = df['FilePath'].apply(lambda x: x.stat().st_size)
-    df['FileSizeGB'] = df['FileSizeBytes'] / (1024 ** 3)
+def main(mp4_files=list(Path("/mnt/usb_storage/cctvnet/").rglob("*.mp4"))):
+    # Get local files
+    local_files = []
+    for d in LOCAL_DIRS:
+        local_files.extend(list_local_mp4s(d))
 
-    df["dates"] = [x.stem for x in mp4_files]
-    df["s_dates"] = [parse_datetime(x.stem.split('_')[0]) for x in mp4_files]
-    df["f_dates"] = [parse_datetime(x.stem.split('_')[1]) for x in mp4_files]
+    # Get remote files
+    remote_files = list_remote_mp4s()
 
-    df["duration"] = (df["f_dates"] - df["s_dates"]).dt.total_seconds()
-    df.to_csv("metadata.csv", index=False)
-    df["ip"] = [x.parent.parent.parent.name if 'videos' in str(x) else x.parent.parent.name for x in mp4_files]
+    # Build dataframe
+    df = build_dataframe(local_files, remote_files)
+
+    print(f"Total videos found: {len(df)} "
+          f"(local: {len(local_files)}, remote: {len(remote_files)})")
+
+    print(df.head())
+    df.to_csv("all_videos.csv", index=False)
+
+    if df is None:
+        print(f"Found {len(mp4_files)} files.")
+        df = pd.DataFrame(mp4_files, columns=['FilePath'])
+        df['FileSizeBytes'] = df['FilePath'].apply(lambda x: x.stat().st_size)
+        df['FileSizeGB'] = df['FileSizeBytes'] / (1024 ** 3)
+
+        df["dates"] = [x.stem for x in mp4_files]
+        df["s_dates"] = [parse_datetime(x.stem.split('_')[0]) for x in mp4_files]
+        df["f_dates"] = [parse_datetime(x.stem.split('_')[1]) for x in mp4_files]
+
+        df["duration"] = (df["f_dates"] - df["s_dates"]).dt.total_seconds()
+        df.to_csv("metadata.csv", index=False)
+        df["ip"] = [x.parent.parent.parent.name if 'videos' in str(x) else x.parent.parent.name for x in mp4_files]
+    else:
+        df['s_dates'] = df['s_dates'].apply(parse_datetime)
+        df['f_dates'] = df['f_dates'].apply(parse_datetime)
+        df["duration"] = (df["f_dates"] - df["s_dates"]).dt.total_seconds()
+
     df = df.sort_values(by=["s_dates", "f_dates"])
-
     dfs = [group for _, group in df.groupby('ip')]
     data = []
     for df in dfs:
@@ -227,12 +342,15 @@ def main():
     # Transpose heatmap: Dates on Y-axis, IPs on X-axis
     heatmap_data = df_data.pivot_table(index='date', columns='ip', values='storage')
 
-    plt.figure(figsize=(18, 20))  # Swap aspect ratio for landscape format
+    plt.figure(figsize=(21, 25))  # Swap aspect ratio for landscape format
     ip_order = [f"66.{x}" for x in df_data['ip_id'].unique().tolist()]
     heatmap_data.columns = pd.Categorical(heatmap_data.columns, categories=ip_order, ordered=True)
     heatmap_data = heatmap_data.sort_index(axis=1)
-
-    ax = sns.heatmap(heatmap_data, annot=True, cmap="viridis", fmt=".0f", cbar_kws={'label': 'Storage (GB)'})
+    heatmap_data.index = pd.to_datetime(heatmap_data.index)
+    ax = sns.heatmap(heatmap_data, annot=False, cmap="viridis", fmt=".0f", cbar_kws={'label': 'Storage (GB)'})
+    # ax.yaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
+    # #ax.set_yticklabels(heatmap_data.index.strftime('%d-%m-%Y'))
+    ax.set_yticks(np.arange(len(heatmap_data.index)) + 0.5)  # center ticks on heatmap cells
     ax.set_yticklabels(heatmap_data.index.strftime('%d-%m-%Y'))
     plt.title(f'Storage Usage Heatmap | HIKVISION ({len(HIKVISION)}) HANWHA ({len(HANWHA)})')
     plt.ylabel('Date')
@@ -260,7 +378,7 @@ def main():
         legend_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5]]
         legend_handles = [Patch(facecolor=color, edgecolor='black', label=label) for color, label in
                           zip(legend_colors, legend_labels)]
-        ax.legend(handles=legend_handles, loc='upper center', fontsize=10, frameon=False, ncol=len(legend_labels), bbox_to_anchor=(0.5, 1.25))
+        ax.legend(handles=legend_handles, loc='upper center', fontsize=10, frameon=False, ncol=len(legend_labels), bbox_to_anchor=(0.5, 1.05))
 
     plt.tight_layout()
 
@@ -268,6 +386,11 @@ def main():
     filename = f"storage_{timestamp}.png"
     out_dir = Path("storage")
     out_dir.mkdir(parents=True, exist_ok=True)
+    filepath = out_dir / filename
+    print(f"Writing {filepath}")
+    plt.savefig(filepath, bbox_inches='tight', dpi=600)
+
+    filename = f"storage.png"
     filepath = out_dir / filename
     print(f"Writing {filepath}")
     plt.savefig(filepath, bbox_inches='tight', dpi=600)
@@ -298,6 +421,60 @@ def main():
     total_filepath = out_dir / total_filename
     print(f"Writing {total_filepath}")
     plt.savefig(total_filepath, bbox_inches='tight', dpi=600)
+    build_calendar(df)
+
+
+def build_calendar(df):
+    # Convert s_dates to datetime
+    df["s_dates"] = pd.to_datetime(df["s_dates"], format="%Y%m%dT%H%M%S")
+
+    # Aggregate by day, summing storage
+    daily_storage = (
+        df.groupby(df["s_dates"].dt.date)["FileSizeGB"]
+        .sum()
+        .rename_axis("date")
+    )
+
+    # Convert index to datetime index (calplot requires it)
+    daily_storage.index = pd.to_datetime(daily_storage.index)
+
+    # Plot with calplot
+    calplot.calplot(
+        daily_storage,
+        suptitle="Daily Storage Usage (GB)",
+        suptitle_kws={"x": 0.5, "y": 1.0}
+    )
+
+    # Save instead of plt.show()
+    plt.savefig("daily_storage_calendar.png", dpi=300, bbox_inches="tight")
+    plt.close()
+
 
 if __name__ == "__main__":
+    # # Get local files
+    # local_files = []
+    # for d in LOCAL_DIRS:
+    #     local_files.extend(list_local_mp4s(d))
+    #
+    # # Get remote files
+    # remote_files = list_remote_mp4s()
+    #
+    # # Build dataframe
+    # df = build_dataframe(local_files, remote_files)
+    #
+    # print(f"Total videos found: {len(df)} "
+    #       f"(local: {len(local_files)}, remote: {len(remote_files)})")
+    #
+    # print(df.head())
+    # df.to_csv("all_videos.csv", index=False)
+
+
+    # dir1 = list(Path("/mnt/usb_storage/cctvnet/").rglob("*.mp4"))
+    # dir2 = list(Path("/mnt/storage/cctvnet/").rglob("*.mp4"))
+    # mp4_files = dir1 + dir2
+    # print(f"Found {len(mp4_files)} .mp4 files")
+    #
+
+    #build_calendar(df)
+
     main()

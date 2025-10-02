@@ -164,6 +164,7 @@ def delete_files_one_by_one():
 
 
 def perform_transfer():
+    print("perform_transfer...")
     try:
         # Connect to the farm server via SSH
         ssh = paramiko.SSHClient()
