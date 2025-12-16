@@ -294,7 +294,9 @@ def main(mp4_files=list(Path("/mnt/usb_storage/cctvnet/").rglob("*.mp4"))):
           f"(local: {len(local_files)}, remote: {len(remote_files)})")
 
     print(df.head())
-    df.to_csv("all_videos.csv", index=False)
+    out_dir = Path("/mnt/storage/frontend/")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df.to_csv((out_dir / "all_videos.csv").as_posix(), index=False)
 
     if df is None:
         print(f"Found {len(mp4_files)} files.")
@@ -384,7 +386,7 @@ def main(mp4_files=list(Path("/mnt/usb_storage/cctvnet/").rglob("*.mp4"))):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"storage_{timestamp}.png"
-    out_dir = Path("storage")
+    out_dir = Path("/mnt/storage/frontend/")
     out_dir.mkdir(parents=True, exist_ok=True)
     filepath = out_dir / filename
     print(f"Writing {filepath}")
@@ -446,7 +448,9 @@ def build_calendar(df):
     )
 
     # Save instead of plt.show()
-    plt.savefig("daily_storage_calendar.png", dpi=300, bbox_inches="tight")
+    out_dir = Path("/mnt/storage/frontend/")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig((out_dir / "daily_storage_calendar.png").as_posix(), dpi=300, bbox_inches="tight")
     plt.close()
 
 

@@ -4,6 +4,7 @@ import os
 import streamlit as st
 import pandas as pd
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -13,9 +14,17 @@ import streamlit.components.v1 as components
 
 VIDEO_BASE = Path("/mnt/storage/cctvnet")
 
+DISK_USAGE_FILE = "/mnt/storage/frontend/logs/disk_usage.json"
+ALL_VIDEO_FILE = "/mnt/storage/frontend/all_videos.csv"
+CALENDAR_FILE = "/mnt/storage/frontend/daily_storage_calendar.png"
+STORAGE_FILE = "/mnt/storage/frontend/storage.png"
+TIMELAPSE_DIR = Path("/mnt/storage/frontend/timelapse")
+MAP_DIR = Path("/mnt/storage/frontend/map")
+THUMBNAIL_DIR = Path("/mnt/storage/frontend/hd")
+
 st.set_page_config(page_title="Wyndhurst CCTV Network Dashboard", layout="wide")
 
-count = st_autorefresh(interval=60*10 * 1000, limit=100, key="refresh")
+count = st_autorefresh(interval=60 * 10 * 1000, limit=100, key="refresh")
 
 # Title with subtitle
 st.title("Wyndhurst CCTV Network Dashboard")
@@ -50,7 +59,7 @@ st.markdown("### Project Repositories")
 st.markdown(
     """
     [Documentation](https://uob.sharepoint.com/:f:/r/teams/grp-bvs-johnoldacrecentre/Shared%20Documents/AI%20Group/documentation?csf=1&web=1&e=xyZzt2)  
-    
+
     Here are the related GitHub repositories for this project:
 
     - [Wyndhurst CCTV Network](https://github.com/biospi/WyndhurstCCTVNet)  
@@ -63,9 +72,9 @@ st.markdown(
 )
 
 # --- Disk Usage Graphs ---
-st.markdown("## 📊 Disk Usage Overview")
+st.markdown("## Disk Usage Overview")
 
-with open("logs/disk_usage.json") as f:
+with open(DISK_USAGE_FILE) as f:
     disk_data = json.load(f)
 
 
@@ -106,7 +115,8 @@ farm_usage = parse_df_output(disk_data["farm_server"])  # just "/"
 
 
 def gb_to_tb_str(val_gb, decimals=2):
-    return f"{val_gb/1024:.{decimals}f} TB"
+    return f"{val_gb / 1024:.{decimals}f} TB"
+
 
 def plot_pie(stats, title):
     fig, ax = plt.subplots(figsize=(2.5, 2.5))
@@ -128,7 +138,8 @@ cols = st.columns(5)
 with cols[0]:
     plot_pie(local_usage["/mnt/storage"], f"Joc1 Main Storage ({gb_to_tb_str(local_usage['/mnt/storage']['size'])})")
 with cols[1]:
-    plot_pie(local_usage["/mnt/usb_storage"], f"Joc1 USB Storage ({gb_to_tb_str(local_usage['/mnt/usb_storage']['size'])})")
+    plot_pie(local_usage["/mnt/usb_storage"],
+             f"Joc1 USB Storage ({gb_to_tb_str(local_usage['/mnt/usb_storage']['size'])})")
 with cols[2]:
     plot_pie(dev_usage["/mnt/storage"], f"Dev Main Storage ({gb_to_tb_str(dev_usage['/mnt/storage']['size'])})")
 with cols[3]:
@@ -137,9 +148,8 @@ with cols[4]:
     mount, stats = next(iter(farm_usage.items()))
     plot_pie(stats, f"Farm PC ({gb_to_tb_str(farm_usage['/']['size'])})")
 
-
 # --- Daily storage chart ---
-df = pd.read_csv("all_videos.csv")  # or query live data
+df = pd.read_csv(ALL_VIDEO_FILE)  # or query live data
 df["date"] = pd.to_datetime(df["s_dates"], format="%Y%m%dT%H%M%S")
 daily = df.groupby(df["date"].dt.date)["FileSizeGB"].sum()
 
@@ -149,23 +159,23 @@ daily.plot(ax=ax, title="Daily Storage Usage (GB)")
 
 # --- Images and videos ---
 st.markdown("### Storage Calendar")
-st.image("/home/fo18103/PycharmProjects/Wyndhurst/daily_storage_calendar.png", caption="Calendar view of daily storage")
+st.image(CALENDAR_FILE, caption="Calendar view of daily storage")
 
 st.markdown("### Storage Snapshot")
-st.image("/home/fo18103/PycharmProjects/Wyndhurst/storage/storage.png",
+st.image(STORAGE_FILE,
          caption="Latest storage snapshot")
 
 st.markdown("### Timelapse")
-timelapse_file = list(Path("timelapse").rglob("*.mp4"))
+timelapse_file = list(TIMELAPSE_DIR.rglob("*.mp4"))
 st.video(timelapse_file[0])
 
 st.markdown("### Last CCTV Map")
-map_file = list(Path("map").rglob("*.jpg"))
+map_file = list(MAP_DIR.rglob("*.jpg"))
 st.image(map_file[0], caption="Most recent frame captured")
 
 # --- Thumbnails ---
 st.markdown("### All Thumbnails")
-thumbnails = sorted(list(Path("hd").rglob("*.jpg")))
+thumbnails = sorted(list(THUMBNAIL_DIR.rglob("*.jpg")))
 full_paths = [thumb.resolve() for thumb in thumbnails]
 
 num_cols = 10
@@ -176,8 +186,6 @@ for i, thumb in enumerate(thumbnails):
     with col:
         st.caption(f"{thumb.stem}")
         st.image(thumb, width='stretch')
-
-
 
 # --- Map view ---
 st.markdown("### CCTV Location")

@@ -1,3 +1,5 @@
+import json
+
 import cv2
 import base64
 import io
@@ -84,9 +86,9 @@ def main(input_dir: Path, mask_dir: Path):
         mask_dir = input_dir.parent / "masks"
         relative_path = image_file.relative_to(input_dir)
         mask_output_path = mask_dir / relative_path.with_name(image_file.stem + "_mask.png")
-        if mask_output_path.exists():
-            print(f"Skipping {image_file}")
-            continue
+        # if mask_output_path.exists():
+        #     print(f"Skipping {image_file}")
+        #     continue
         # if "44" not in image_file.stem:
         #     continue
         img = cv2.imread(str(image_file))
@@ -171,5 +173,39 @@ def decode_base64_mask(b64_string: str, show: bool = True):
 
     return mask_np
 
+
+def export_all_masks_to_json(mask_dir: Path, output_json: Path):
+    """
+    Finds all binary mask images inside mask_dir and creates a JSON file
+    mapping base64 strings to their respective file names (without extension).
+
+    Example format:
+    {
+        "123": "<base64string>",
+        "456": "<base64string>"
+    }
+    """
+    mask_files = sorted(list(mask_dir.rglob("*.png")))
+    data = {}
+
+    for mask_file in mask_files:
+        b64_str = mask_path_to_base64(mask_file)
+        key = mask_file.stem                       # e.g. "123_mask" or "123"
+        data[key] = b64_str
+
+    # Save JSON
+    output_json.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_json, "w") as f:
+        json.dump(data, f, indent=4)
+
+    print(f"Saved JSON: {output_json}")
+    return data
+
+
+
 if __name__ == "__main__":
-    main(Path("/mnt/storage/thumbnails/hd"), Path("/mnt/storage/thumbnails/masks"))
+    # main(Path("/mnt/storage/thumbnails/360"), Path("/mnt/storage/thumbnails/masks_360"))
+    mask_dir = Path("/mnt/storage/thumbnails/masks")
+    output_json = Path("/mnt/storage/thumbnails/masks/base64_masks.json")
+
+    export_all_masks_to_json(mask_dir, output_json)

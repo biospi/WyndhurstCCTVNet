@@ -44,11 +44,12 @@ def main():
     print("Connecting to remote server...")
 
     # Local folders
-    LOCAL_HD = Path("hd")
-    LOCAL_MAP = Path("map")
-    LOCAL_TIMELAPSE = Path("timelapse")
-    LOGS = Path("logs")
-    for folder in [LOCAL_HD, LOCAL_MAP, LOCAL_TIMELAPSE, LOGS]:
+    LOCAL_HD = Path("/mnt/storage/frontend/hd")
+    LOCAL_SENSE = Path("/mnt/storage/frontend/sense")
+    LOCAL_MAP = Path("/mnt/storage/frontend/map")
+    LOCAL_TIMELAPSE = Path("/mnt/storage/frontend/timelapse")
+    LOGS = Path("/mnt/storage/frontend/logs")
+    for folder in [LOCAL_HD, LOCAL_SENSE, LOCAL_MAP, LOCAL_TIMELAPSE, LOGS]:
         folder.mkdir(parents=True, exist_ok=True)
 
     # --- Collect disk usage ---
@@ -101,6 +102,9 @@ def main():
     jpg_files = recursive_files(map_path, ".jpg")
     if jpg_files:
         latest_jpg = max(jpg_files, key=lambda x: x[1])[0]
+        for f in LOCAL_MAP.iterdir():
+            if f.is_file():
+                f.unlink()
         local_file = LOCAL_MAP / Path(latest_jpg).name
         sftp.get(latest_jpg, str(local_file))
         print(f"Downloaded latest jpg {latest_jpg} → {local_file}")
@@ -112,6 +116,18 @@ def main():
         local_file = LOCAL_TIMELAPSE / "timelapse.mp4"
         sftp.get(latest_mp4, str(local_file))
         print(f"Downloaded latest mp4 {latest_mp4} → {local_file}")
+
+    # --- 1. Download all .json from HD folder ---
+    sense_path = "/mnt/storage/sense"
+    try:
+        for file_attr in sftp.listdir_attr(sense_path):
+            if file_attr.filename.lower().endswith(".json"):
+                remote_file = f"{sense_path}/{file_attr.filename}"
+                local_file = LOCAL_SENSE / file_attr.filename
+                sftp.get(remote_file, str(local_file))
+                print(f"Downloaded {remote_file} → {local_file}")
+    except FileNotFoundError:
+        print(f"SENSE folder not found: {sense_path}")
 
     sftp.close()
     ssh.close()
@@ -125,5 +141,8 @@ def extract_date_from_filename(filename: str):
 
 if __name__ == "__main__":
     while True:
-        main()
-        time.sleep(3600)  # wait 1 hour
+        try:
+            main()
+            time.sleep(60)
+        except paramiko.ssh_exception.SSHException as e:
+            print(e)

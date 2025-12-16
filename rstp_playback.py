@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import subprocess
 from pathlib import Path
 
+from ocr_timestamp import repair_video_timestamp
 from storage_info import parse_datetime
 from utils import run_cmd, SOURCE_PATH
 import configparser
@@ -226,19 +227,6 @@ def download_video(rtsp_url, output_file, raw=False):
     return res
 
 
-# def find_missing_ranges(clips_range):
-#     missing_ranges = []
-#     missing_ranges_str = []
-#     for i in range(len(clips_range) - 1):
-#         end = clips_range[i][1]
-#         next_start = clips_range[i + 1][0]
-#         if next_start > end:
-#             # Calculate the missing range
-#             missing_start = end + timedelta(seconds=1)
-#             missing_end = next_start - timedelta(seconds=1)
-#             missing_ranges.append([missing_start, missing_end])
-#             missing_ranges_str.append([missing_start.strftime("%Y%m%dT%H%M%S"), missing_end.strftime("%Y%m%dT%H%M%S")])
-#     return missing_ranges, missing_ranges_str
 def find_missing_ranges(clips_range, min_gap=timedelta(minutes=5), max_gap=timedelta(minutes=5, seconds=6)):
     missing_ranges = []
     missing_ranges_str = []
@@ -382,6 +370,8 @@ def main(ip, is_fisheye, port=0):
                     continue
 
                 print(f"File duration: {duration}")
+                #repair timestamp:
+                repair_video_timestamp(output_file)
                 #skip duration check for camera with motion detection
                 if ip in ["10.70.66.31", "10.70.66.30", "10.70.66.29", "10.70.66.28"]:
                     print(f"Motion detection enabled. Skipping duration check for {ip}.")
