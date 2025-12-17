@@ -15,17 +15,14 @@ It briefly describes each repository and provides the link, without operational 
 ---
 
 ## Repository Overview
-
-| Repository                | Purpose                                                                                                                                                                                                                    | Link                                                                                               |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **WyndhurstCCTVNetDev**   | Development and workstation-side tools for the Wyndhurst CCTV network, including the Streamlit dashboard, storage analytics, timelapses, thumbnails, sensor visualisation, and data synchronisation from upstream servers. | [https://github.com/biospi/WyndhurstCCTVNetDev](https://github.com/biospi/WyndhurstCCTVNetDev)     |
-| **WyndhurstFarmFrontEnd** | User-facing GUI application that creates a secure SSH tunnel and launches the Wyndhurst CCTV Streamlit dashboard locally for University of Bristol collaborators. Designed for ease of access and Windows distribution.    | [https://github.com/biospi/WyndhurstFarmFrontEnd](https://github.com/biospi/WyndhurstFarmFrontEnd) |
-| **WyndhurstCCTVNet**      | Core CCTV network utilities used to download and manage video data from the Wyndhurst farm to the JOC1 workstation.                                                                                                        | [https://github.com/biospi/WyndhurstCCTVNet](https://github.com/biospi/WyndhurstCCTVNet)           |
-| **WyndhurstCCTVNetFarm**  | Farm-side repository responsible for downloading and managing CCTV video data directly on the Wyndhurst Farm PC.                                                                                                           | [https://github.com/biospi/WyndhurstCCTVNetFarm](https://github.com/biospi/WyndhurstCCTVNetFarm)   |
-| **UoBDewarp**             | GUI tool for de-warping fisheye camera videos, enabling easy correction of wide-angle distortions for analysis and viewing.                                                                                                | [https://github.com/biospi/UoBDewarp](https://github.com/biospi/UoBDewarp)                         |
-| **OCRSync**               | Command-line tool for OCR-based timestamp extraction and synchronisation of multi-camera videos, producing corrected per-camera outputs and synchronised montage videos.                                                   | [https://github.com/biospi/OCRSync](https://github.com/biospi/OCRSync)                             |
-
-
+| Repository                | Description                                                                                             | Link                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **WyndhurstCCTVNetDev**   | Workstation-side tools: Streamlit dashboard, storage monitoring, timelapses, thumbnails, and data sync. | [https://github.com/biospi/WyndhurstCCTVNetDev](https://github.com/biospi/WyndhurstCCTVNetDev)     |
+| **WyndhurstFarmFrontEnd** | Simple GUI to open an SSH tunnel and access the CCTV Streamlit dashboard locally.                       | [https://github.com/biospi/WyndhurstFarmFrontEnd](https://github.com/biospi/WyndhurstFarmFrontEnd) |
+| **WyndhurstCCTVNet**      | Downloads CCTV video from Wyndhurst Farm to the JOC1 workstation.                                       | [https://github.com/biospi/WyndhurstCCTVNet](https://github.com/biospi/WyndhurstCCTVNet)           |
+| **WyndhurstCCTVNetFarm**  | Farm PC-side video download and management.                                                             | [https://github.com/biospi/WyndhurstCCTVNetFarm](https://github.com/biospi/WyndhurstCCTVNetFarm)   |
+| **UoBDewarp**             | GUI tool to dewarp fisheye CCTV videos.                                                                 | [https://github.com/biospi/UoBDewarp](https://github.com/biospi/UoBDewarp)                         |
+| **OCRSync**               | OCR-based timestamp extraction and multi-camera video synchronisation.                                  | [https://github.com/biospi/OCRSync](https://github.com/biospi/OCRSync)                             |
 
 ---
 
