@@ -27,9 +27,45 @@ It briefly describes each repository and provides the link, without operational 
 ---
 
 ## Prerequisites
-
 An **existing, configured workstation** is required.
 Please follow the internal guide to install and configure a new workstation before proceeding.
+
+## Sanity check
+
+Before proceeding, verify that you have the **required access permissions** to all relevant machines.
+If any connection fails, contact **IT Services** to request access.
+
+Use the commands below to quickly confirm connectivity and port forwarding.
+
+### 1) Connect to **JOC1 workstation**
+
+This establishes SSH access and forwards ports to the farm network.
+
+```bash
+ssh -L 30022:10.70.66.2:22 -L 33389:localhost:3389 uobusername@IT106570.users.bris.ac.uk
+```
+
+### 2) Connect to the **Development workstation**
+
+This forwards RDP access for development and maintenance.
+
+```bash
+ssh -L 33391:localhost:3389 uobusername@IT107338.users.bris.ac.uk
+```
+
+### 3) Connect to the **Farm PC** (via JOC1 tunnel)
+
+This uses the forwarded SSH port from the JOC1 connection.
+
+```bash
+ssh -L 33390:localhost:3389 -p 30022 uobusername@localhost
+```
+
+**Expected outcome:**
+All three commands should connect without permission errors. Successful connections confirm that your SSH access and port forwarding are correctly configured.
+
+> [!NOTE]
+> Replace **uobusername** with your username for example: fo18103.
 
 ---
 
