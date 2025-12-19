@@ -77,7 +77,7 @@ ssh username@10.70.66.2
 ```
 
 **Expected outcome:**
-All three commands should connect without permission errors. Successful connections confirm that your SSH access and port forwarding are correctly configured.
+All commands should connect without permission errors. Successful connections confirm that your SSH access and port forwarding are correctly configured.
 
 > [!NOTE]
 > Replace **uobusername** with your username for example: fo18103.
