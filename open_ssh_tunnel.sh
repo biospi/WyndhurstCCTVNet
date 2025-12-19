@@ -4,7 +4,7 @@
 pkill -f "gnome-terminal"
 
 # Path to your SSH private key
-SSH_KEY_PATH="$HOME/.ssh/id_rsa_hanwha"
+SSH_KEY_PATH="$HOME/.ssh/id_rsa"
 
 # SSH server details
 SSH_USER="$USER"

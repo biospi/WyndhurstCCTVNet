@@ -61,11 +61,29 @@ This uses the forwarded SSH port from the JOC1 connection.
 ssh -L 33390:localhost:3389 -p 30022 uobusername@localhost
 ```
 
+## Password-less SSH Login to the Farm PC from JOC1
+
+On JOC1, generate a SSH Key (if you don’t already have one).
+Keep all prompt to default.
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "$USER@it106570"
+```
+
+Check ssh access from JOC1 to Farm PC with:
+
+```bash
+ssh username@10.70.66.2
+```
+
 **Expected outcome:**
 All three commands should connect without permission errors. Successful connections confirm that your SSH access and port forwarding are correctly configured.
 
 > [!NOTE]
 > Replace **uobusername** with your username for example: fo18103.
+
+
+
 
 ---
 

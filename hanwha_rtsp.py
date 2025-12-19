@@ -12,7 +12,7 @@ config.read("config.cfg")
 CAMERA_LIST_FILE = Path("hanwha_ip_study.txt")
 BASE_OUTPUT_DIR = Path("/mnt/storage/cctvnet/")
 CHUNK_DURATION = 20 * 60  # 20 minutes
-SSH_KEY_PATH = "~/.ssh/id_rsa_hanwha"
+SSH_KEY_PATH = "~/.ssh/id_rsa"
 SSH_USER = getpass.getuser()
 SSH_SERVER = "10.70.66.2"
 
@@ -148,9 +148,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Recording stopped.")
 
-#"#fo18103@it106570:~$ ssh -L 5554:10.70.66.16:554 fo18103@10.70.66.2
-
-#ssh -i ~/.ssh/id_rsa_hanwha fo18103@10.70.66.2
-#ssh-keygen -t rsa -b 4096 -C "fo18103@it106570"
-#ssh-copy-id fo18103@10.70.66.2
-#ssh fo18103@10.70.66.2
