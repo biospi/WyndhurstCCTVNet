@@ -68,6 +68,8 @@ Keep all prompt to default.
 
 ```bash
 ssh-keygen -t rsa -b 4096 -C "$USER@it106570"
+
+ssh-copy-id username@10.70.66.2
 ```
 
 Check ssh access from JOC1 to Farm PC with:
