@@ -249,5 +249,3 @@ if __name__ == "__main__":
     #delete_corrupted_files()
     main()
 
-
-#nohup sshpass -p 'Mojjo@2015' rsync -avz --ignore-existing fo18103@IT107029.users.bris.ac.uk:/mnt/storage/cctv/ /mnt/storage/cctv/ > rsync.log 2>&1 &
