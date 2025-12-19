@@ -4,7 +4,7 @@
 SSH_KEY_PATH="$HOME/.ssh/id_rsa_hanwha"
 
 # SSH server details
-SSH_USER="fo18103"
+SSH_USER="$USER"
 SSH_SERVER="10.70.66.2"
 
 # Read the IP and port from file.txt

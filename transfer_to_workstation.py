@@ -3,10 +3,11 @@ from datetime import datetime
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
-
 import pandas as pd
+import getpass
 
-REMOTE_USER = "fo18103"
+
+REMOTE_USER = getpass.getuser()
 REMOTE_HOST = "IT107338.users.bris.ac.uk"
 REMOTE_DIR = "/mnt/storage/cctvnet"
 

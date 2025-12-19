@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 from datetime import datetime, timedelta
-
+import getpass
 
 from storage_info import get_video_duration
 from utils import is_float
@@ -17,7 +17,7 @@ config.read("config.cfg")
 
 # Configuration
 farm_server_ip = "10.70.66.2"
-farm_media_paths = ["/media/fo18103/Storage/CCTV/hikvision/media/"]
+farm_media_paths = [f"/media/{getpass.getuser()}/Storage/CCTV/hikvision/media/"]
 
 receiving_server_path = "/mnt/storage/cctvnet/"
 farm_server_user = config["SSH"]["farm_server_user"]

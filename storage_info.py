@@ -10,6 +10,7 @@ import matplotlib
 from matplotlib.patches import Patch
 import calplot
 import numpy as np
+import getpass
 
 
 matplotlib.use("Agg")  # Use a non-interactive backend
@@ -42,7 +43,7 @@ LOCAL_DIRS = [
     Path("/mnt/storage/cctvnet"),
 ]
 
-REMOTE_USER = "fo18103"
+REMOTE_USER = getpass.getuser()
 REMOTE_HOST = "IT107338.users.bris.ac.uk"
 
 
