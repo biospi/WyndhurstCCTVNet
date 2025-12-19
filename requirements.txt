@@ -8,3 +8,4 @@ scipy
 matplotlib
 opencv-python
 calplot
+pytesseract
