@@ -61,7 +61,7 @@ This uses the forwarded SSH port from the JOC1 connection.
 ssh -L 33390:localhost:3389 -p 30022 uobusername@localhost
 ```
 
-### Password-less SSH Login to the Farm PC from JOC1
+### 4) Password-less SSH Login to the Farm PC from JOC1
 
 On JOC1, generate a SSH Key (if you don’t already have one).
 Keep all prompt to default.
