@@ -10,7 +10,6 @@ from collections import Counter
 from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import List
-import pynvml
 
 pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 print(pytesseract.get_tesseract_version())

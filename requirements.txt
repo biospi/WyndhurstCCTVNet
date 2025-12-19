@@ -6,3 +6,5 @@ yagmail
 seaborn
 scipy
 matplotlib
+opencv-python
+calplot
