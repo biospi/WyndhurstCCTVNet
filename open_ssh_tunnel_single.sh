@@ -52,4 +52,6 @@ fi
 # Open new tunnel
 SSH_COMMAND="ssh -i $SSH_KEY_PATH -L ${LOCAL_PORT}:${CAMERA_IP}:554 -N ${SSH_USER}@${SSH_SERVER}"
 echo "Opening SSH tunnel for $CAMERA_IP on port $LOCAL_PORT..."
-gnome-terminal -- bash -c "${SSH_COMMAND}; exec bash"
+$SSH_COMMAND > /dev/null 2>&1 &
+
+echo "SSH tunnel established in the background."
